@@ -12,7 +12,7 @@ class Ray {
     inline const glm::dvec3& origin() const { return _origin; }
     inline const glm::dvec3& direction() const { return _direction; }
   
-    const glm::dvec3 at(double t) const {
+    inline const glm::dvec3 at(double t) const {
       return _origin + t * _direction;
     }
   

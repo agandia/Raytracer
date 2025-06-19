@@ -1,7 +1,7 @@
-#include <iostream>
 
 #include "Utilities.hpp"
-#include "Ray.hpp"
+#include "HitPool.hpp"
+#include "Sphere.hpp"
 
 int main() {
   // Image
@@ -11,6 +11,11 @@ int main() {
   // Calculate the image height, but make sure that is at least 1.
   int image_height = int(image_width / aspect_ratio);
   image_height = (image_height < 1) ? 1 : image_height;
+
+  // World
+  HitPool world; // Create a hit pool to hold the hittables
+  world.add(std::make_shared<Sphere>(glm::dvec3(0.0, 0.0, -1.0), 0.5)); // Add a sphere at (0, 0, -1) with radius 0.5
+  world.add(std::make_shared<Sphere>(glm::dvec3(0.0, -100.5, -1.0), 100.0)); // Add a large sphere to act as the ground
 
   // Camera
   const double focal_length = 1.0; // Distance from camera to focal plane
@@ -40,7 +45,7 @@ int main() {
       const glm::dvec3 ray_direction = pixel_center - camera_center; // Ray direction from camera to pixel center
       Ray ray(camera_center, ray_direction);
 
-      glm::dvec3 color = ray_color(ray); // Get the color for the ray
+      glm::vec3 color = ray_color(ray, world); // Get the color for the ray
 
       write_color(std::cout, color);
     }

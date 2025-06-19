@@ -11,7 +11,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(glm)
 
 # Add source to this project's executable.
-add_executable (Raytracer "main.cpp")
+add_executable (Raytracer "main.cpp" "Sphere.cpp" "HitPool.cpp")
 target_link_libraries(Raytracer PRIVATE glm)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
