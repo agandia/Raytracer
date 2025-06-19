@@ -1,37 +1,34 @@
 #include <iostream>
+
 #include "Utilities.hpp"
 #include "Ray.hpp"
 
-glm::vec3 ray_color(const Ray& ray) {
-  return glm::vec3(0.0f, 0.0f, 0.0f); // Background color (black)
-}
-
 int main() {
   // Image
-  const int aspect_ratio = 16.0 / 9.0;
-  const int image_width = 512;
+  const double aspect_ratio = 16.0 / 9.0;
+  const int image_width = 400;
 
   // Calculate the image height, but make sure that is at least 1.
   int image_height = int(image_width / aspect_ratio);
   image_height = (image_height < 1) ? 1 : image_height;
 
   // Camera
-  const double focal_length = 1.0f; // Distance from camera to focal plane
-  const double viewport_height = 2.0f; // Height of the viewport
+  const double focal_length = 1.0; // Distance from camera to focal plane
+  const double viewport_height = 2.0; // Height of the viewport
   const double viewport_width = viewport_height * (double(image_width)/image_height); // Width of the viewport
-  const glm::dvec3 camera_center(0.0f); // Camera position
+  const glm::dvec3 camera_center(0.0); // Camera position
 
   // Calculate two vectors across the horizontal and down the vertical viewport edges
-  const glm::dvec3 viewport_u = glm::vec3(viewport_width, 0.0f, 0.0f); // Horizontal vector
-  const glm::dvec3 viewport_v = glm::vec3(0.0f, -viewport_height, 0.0f); // Vertical vector
+  const glm::dvec3 viewport_u = glm::vec3(viewport_width, 0.0, 0.0); // Horizontal vector
+  const glm::dvec3 viewport_v = glm::vec3(0.0, -viewport_height, 0.0); // Vertical vector
 
-  // Calculate the  horizontal and vertical daelta vetors from pixel to pixel
+  // Calculate the  horizontal and vertical delta vetors from pixel to pixel
   const glm::dvec3 pixel_delta_u = viewport_u / double(image_width); // Horizontal delta vector
   const glm::dvec3 pixel_delta_v = viewport_v / double(image_height); // Vertical delta vector
 
   // Calculate the location of of the upper left pixel
-  const glm::dvec3 viewport_upper_left = camera_center - glm::dvec3(0.0f, 0.0f, focal_length) - viewport_u / (double)2.0f + viewport_v / (double)2.0f;
-  const glm::dvec3 pixel00_loc = viewport_upper_left + (double)0.5f * (pixel_delta_u + pixel_delta_v);
+  const glm::dvec3 viewport_upper_left = camera_center - glm::dvec3(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+  const glm::dvec3 pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
   //Render
   std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
