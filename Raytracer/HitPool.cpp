@@ -8,13 +8,13 @@ void HitPool::add(std::shared_ptr<Hittable> object) {
   hit_objects.push_back(object);
 }
 
-bool HitPool::hit(const Ray& r, double tmin, double tmax, HitRecord& rec) const {
+bool HitPool::hit(const Ray& r, Interval interval, HitRecord& rec) const {
   HitRecord temp_rec;
   bool hit_anything = false;
-  auto closest_so_far = tmax;
+  auto closest_so_far = interval.max;
 
   for (const std::shared_ptr<Hittable>& object : hit_objects) {
-    if (object->hit(r, tmin, closest_so_far, temp_rec)) {
+    if (object->hit(r, Interval(interval.min, closest_so_far), temp_rec)) {
       hit_anything = true;
       closest_so_far = temp_rec.t;
       rec = temp_rec;

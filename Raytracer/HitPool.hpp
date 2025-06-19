@@ -16,5 +16,5 @@ class HitPool: public Hittable {
     void clear();
     void add(std::shared_ptr<Hittable> object);
 
-    bool hit(const Ray& ray, double t_min, double t_max, HitRecord& rec) const override;
+    bool hit(const Ray& ray, Interval t, HitRecord& rec) const override;
 };

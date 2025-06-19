@@ -1,7 +1,7 @@
 #pragma once
 
-//#include <glm/glm.hpp>
 #include "Ray.hpp"
+#include "Interval.hpp"
 
 class HitRecord {
   public:
@@ -20,7 +20,7 @@ class HitRecord {
 class Hittable {
   public:
     // Check if the ray intersects with the object
-    virtual bool hit(const Ray& r, double t_min, double t_max, HitRecord& rec) const = 0;
+    virtual bool hit(const Ray& r, Interval t, HitRecord& rec) const = 0;
     // Virtual destructor for proper cleanup of derived classes
     virtual ~Hittable() = default;
 };
