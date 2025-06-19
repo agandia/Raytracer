@@ -1,11 +1,37 @@
 #include <iostream>
-#include "glm/glm.hpp"
 #include "Utilities.hpp"
+#include "Ray.hpp"
+
+glm::vec3 ray_color(const Ray& ray) {
+  return glm::vec3(0.0f, 0.0f, 0.0f); // Background color (black)
+}
 
 int main() {
   // Image
-  int image_width = 256;
-  int image_height = 256;
+  const int aspect_ratio = 16.0 / 9.0;
+  const int image_width = 512;
+
+  // Calculate the image height, but make sure that is at least 1.
+  int image_height = int(image_width / aspect_ratio);
+  image_height = (image_height < 1) ? 1 : image_height;
+
+  // Camera
+  const double focal_length = 1.0f; // Distance from camera to focal plane
+  const double viewport_height = 2.0f; // Height of the viewport
+  const double viewport_width = viewport_height * (double(image_width)/image_height); // Width of the viewport
+  const glm::dvec3 camera_center(0.0f); // Camera position
+
+  // Calculate two vectors across the horizontal and down the vertical viewport edges
+  const glm::dvec3 viewport_u = glm::vec3(viewport_width, 0.0f, 0.0f); // Horizontal vector
+  const glm::dvec3 viewport_v = glm::vec3(0.0f, -viewport_height, 0.0f); // Vertical vector
+
+  // Calculate the  horizontal and vertical daelta vetors from pixel to pixel
+  const glm::dvec3 pixel_delta_u = viewport_u / double(image_width); // Horizontal delta vector
+  const glm::dvec3 pixel_delta_v = viewport_v / double(image_height); // Vertical delta vector
+
+  // Calculate the location of of the upper left pixel
+  const glm::dvec3 viewport_upper_left = camera_center - glm::dvec3(0.0f, 0.0f, focal_length) - viewport_u / (double)2.0f + viewport_v / (double)2.0f;
+  const glm::dvec3 pixel00_loc = viewport_upper_left + (double)0.5f * (pixel_delta_u + pixel_delta_v);
 
   //Render
   std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
@@ -13,7 +39,12 @@ int main() {
   for (int j = 0; j < image_height; j++) {
     std::clog << "\rScanlines remaining: " << image_height - j << ' ' << std::flush;
     for (int i = 0; i < image_width; i++) {
-      const glm::vec3 color = glm::vec3(double(i) / (image_width - 1), double(j) / (image_height - 1), 0.0f);
+      const glm::dvec3 pixel_center = pixel00_loc + (double)i * pixel_delta_u + (double)j * pixel_delta_v;
+      const glm::dvec3 ray_direction = pixel_center - camera_center; // Ray direction from camera to pixel center
+      Ray ray(camera_center, ray_direction);
+
+      glm::dvec3 color = ray_color(ray); // Get the color for the ray
+
       write_color(std::cout, color);
     }
   }
