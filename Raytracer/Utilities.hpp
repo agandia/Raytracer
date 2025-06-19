@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <glm/gtx/norm.hpp>
 #include "Ray.hpp"
 
 void write_color(std::ostream &out, const glm::vec3 color) {
@@ -11,15 +12,15 @@ void write_color(std::ostream &out, const glm::vec3 color) {
 
 double hit_sphere(const glm::dvec3& center, double radius, const Ray& ray) {
   glm::dvec3 oc = center - ray.origin(); //ray from center of sphere to ray origin
-  double a = glm::dot(ray.direction(), ray.direction());
-  double b = -2.0 * glm::dot(oc, ray.direction());
-  double c = glm::dot(oc, oc) - radius * radius;
-  double discriminant = b * b - 4 * a * c;
+  double a = glm::length2(ray.direction());
+  double h = glm::dot(ray.direction(), oc);
+  double c = glm::length2(oc) - radius * radius;
+  double discriminant = h * h - a * c;
   
   if(discriminant < 0) {
     return -1.0; // No intersection
   } else {
-    return (-b - glm::sqrt(discriminant)) / (2.0 * a); // Return the nearest intersection point
+    return (h - glm::sqrt(discriminant)) / a; // Return the nearest intersection point
   }
 }
 
