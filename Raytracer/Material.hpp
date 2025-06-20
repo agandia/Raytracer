@@ -64,7 +64,7 @@ class Dielectric : public Material {
         bool cannot_refract = etai_over_etat * sin_theta > 1.0;
         glm::dvec3 direction;
 
-        if (cannot_refract) {
+        if (cannot_refract || reflectance(cos_theta, etai_over_etat) > random_double()) {
             direction = reflect(unit_direction, rec.normal);
         } else {
             direction = refract(unit_direction, rec.normal, etai_over_etat);
@@ -74,4 +74,11 @@ class Dielectric : public Material {
     }
   private:
     double ref_idx; // Index of refraction
+
+    static double reflectance(double cosine, double ref_idx) {
+        // Schlick's approximation for reflectance
+        double r0 = (1 - ref_idx) / (1 + ref_idx);
+        r0 = r0 * r0;
+        return r0 + (1 - r0) * pow((1 - cosine), 5);
+    }
 };
