@@ -49,12 +49,20 @@ inline glm::dvec3 random_on_hemisphere(const glm::dvec3& normal) {
   }
 }
 
+inline double linear_to_gamma(double value) {
+  // Converts a linear color value to gamma space.
+  if(value > 0)
+    return std::sqrt(value);
+
+  return 0.0;
+}
+
 inline void write_color(std::ostream& out, const glm::vec3 color) {
   // Translate the [0, 1] component values to the byte range [0, 255].
   static const Interval intensity(0.000, 0.999);
   
-  out << static_cast<int>(256 * intensity.clamp(color.r)) << ' '
-      << static_cast<int>(256 * intensity.clamp(color.g)) << ' '
-      << static_cast<int>(256 * intensity.clamp(color.b)) << '\n';
+  out << static_cast<int>(256 * intensity.clamp(linear_to_gamma(color.r))) << ' '
+      << static_cast<int>(256 * intensity.clamp(linear_to_gamma(color.g))) << ' '
+      << static_cast<int>(256 * intensity.clamp(linear_to_gamma(color.b))) << '\n';
 }
 
