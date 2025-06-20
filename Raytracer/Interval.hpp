@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Utilities.hpp"
+#include <algorithm>
+#include "Constants.hpp"
 
 class Interval {
 public:
