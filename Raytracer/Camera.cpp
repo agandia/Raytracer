@@ -79,7 +79,7 @@ glm::vec3 Camera::ray_color(const Ray& ray, int depth, const Hittable& world) {
   HitRecord hit_record;
   // Add a small delta to the interval to avoid self-intersection (shadow acne)
   if (world.hit(ray, Interval(0.00001, infinity), hit_record)) {
-    glm::dvec3 direction = random_on_hemisphere(hit_record.normal);
+    glm::dvec3 direction = hit_record + random_unit_vector();
     return 0.5f * ray_color(Ray(hit_record.p, direction), depth-1, world);
   }
 
