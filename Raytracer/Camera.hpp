@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Hittable.hpp"
+#include "Material.hpp"
 
 class Camera {
 public:
@@ -24,6 +25,6 @@ private:
 
   Ray get_ray(int x, int y) const;
   glm::dvec3 sample_square() const;
-  glm::vec3 ray_color(const Ray& ray, int depth, const Hittable& world);
+  glm::vec3 ray_color(const Ray& ray, int depth, const Hittable& world) const;
 
 };

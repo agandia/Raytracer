@@ -70,7 +70,7 @@ glm::dvec3 Camera::sample_square() const {
   return glm::dvec3(random_double() - 0.5, random_double() - 0.5, 0.0);
 }
 
-glm::vec3 Camera::ray_color(const Ray& ray, int depth, const Hittable& world) {
+glm::vec3 Camera::ray_color(const Ray& ray, int depth, const Hittable& world) const {
   // If we've exceeded the ray bounce limit, no more light is gathered.
   if(depth <= 0) {
     return glm::vec3(0.0f); // Return black color
@@ -79,8 +79,13 @@ glm::vec3 Camera::ray_color(const Ray& ray, int depth, const Hittable& world) {
   HitRecord hit_record;
   // Add a small delta to the interval to avoid self-intersection (shadow acne)
   if (world.hit(ray, Interval(0.00001, infinity), hit_record)) {
-    glm::dvec3 direction = hit_record.normal + random_unit_vector();
-    return 0.1f * ray_color(Ray(hit_record.p, direction), depth-1, world);
+    Ray scattered_ray;
+    glm::vec3 attenuation;
+    if(hit_record.material->scatter(ray, hit_record, attenuation, scattered_ray)) {
+      // If the material scatters the ray, recursively calculate the color
+      return attenuation * ray_color(scattered_ray, depth - 1, world);
+    }
+    return glm::vec3(0.0f); // If the material does not scatter, return black
   }
 
   glm::dvec3 unit_direction = glm::normalize(ray.direction());

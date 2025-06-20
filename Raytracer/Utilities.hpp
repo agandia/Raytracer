@@ -13,6 +13,12 @@ inline double degrees_to_radians(double degrees) {
   return degrees * pi / 180.0;
 }
 
+inline bool near_zero(const glm::dvec3& v) {
+  // Returns true if the vector is close to zero in all components.
+  const double s = 1e-8;
+  return (fabs(v.x) < s) && (fabs(v.y) < s) && (fabs(v.z) < s);
+}
+
 inline double random_double() {
   // Returns a random real in [0, 1).
   return rand() / (RAND_MAX + 1.0);
@@ -47,6 +53,19 @@ inline glm::dvec3 random_on_hemisphere(const glm::dvec3& normal) {
   } else {
     return -on_unit_sphere;
   }
+}
+
+inline glm::dvec3 reflect(const glm::dvec3& v, const glm::dvec3& n) {
+  // Reflects vector v around normal n.
+  return v - 2 * glm::dot(v, n) * n;
+}
+
+inline glm::dvec3 refract(const glm::dvec3& uv, const glm::dvec3& n, double etai_over_etat) {
+  // Refracts vector uv through normal n with the given ratio of indices of refraction.
+  double cos_theta = glm::min(glm::dot(-uv, n), 1.0);
+  glm::dvec3 r_out_perp = etai_over_etat * (uv + cos_theta * n);
+  glm::dvec3 r_out_parallel = -sqrt(fabs(1.0 - glm::length2(r_out_perp))) * n;
+  return r_out_perp + r_out_parallel;
 }
 
 inline double linear_to_gamma(double value) {

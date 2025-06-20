@@ -26,6 +26,7 @@ bool Sphere::hit(const Ray& ray, Interval interval, HitRecord& rec) const {
     rec.p = ray.at(rec.t); // Point of intersection
     glm::vec3 outward_normal = (rec.p - center) / radius; // Normalized normal vector
     rec.set_face_normal(ray, outward_normal); // Normal at the intersection point
+    rec.material = mat; // Material of the sphere
     
     return true;
 }
