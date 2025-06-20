@@ -5,9 +5,10 @@
 class Camera {
 public:
 
-  double aspect_ratio = 1.0; // Ratio of image width over height
-  int image_width = 100; // Rendered image width in pixels
-  int samples_per_pixel = 100; // Number of samples per pixel
+  double  aspect_ratio      = 1.0;  // Ratio of image width over height
+  int     image_width       = 100;  // Rendered image width in pixels
+  int     samples_per_pixel = 100;  // Number of samples per pixel
+  int     max_depth         = 10;   // Maximum number of ray bounces into the scene
 
   void render(const Hittable& world);
 
@@ -23,6 +24,6 @@ private:
 
   Ray get_ray(int x, int y) const;
   glm::dvec3 sample_square() const;
-  glm::vec3 ray_color(const Ray& ray, const Hittable& world);
+  glm::vec3 ray_color(const Ray& ray, int depth, const Hittable& world);
 
 };

@@ -14,7 +14,7 @@ void Camera::render(const Hittable& world) {
       for(int sample = 0; sample < samples_per_pixel; sample++) {
         // Generate a ray for the current pixel
         Ray ray = get_ray(i, j);
-        pixel_color += ray_color(ray, world); // Accumulate color for the pixel
+        pixel_color += ray_color(ray, max_depth, world); // Accumulate color for the pixel
       }
 
       write_color(std::cout, pixel_samples_scale * pixel_color);
@@ -70,10 +70,17 @@ glm::dvec3 Camera::sample_square() const {
   return glm::dvec3(random_double() - 0.5, random_double() - 0.5, 0.0);
 }
 
-glm::vec3 Camera::ray_color(const Ray& ray, const Hittable& world) {
+glm::vec3 Camera::ray_color(const Ray& ray, int depth, const Hittable& world) {
+  // If we've exceeded the ray bounce limit, no more light is gathered.
+  if(depth <= 0) {
+    return glm::vec3(0.0f); // Return black color
+  }
+
   HitRecord hit_record;
-  if (world.hit(ray, Interval(0, infinity), hit_record)) {
-    return 0.5f * (glm::vec3(hit_record.normal) + glm::vec3(1.0f));
+  // Add a small delta to the interval to avoid self-intersection (shadow acne)
+  if (world.hit(ray, Interval(0.00001, infinity), hit_record)) {
+    glm::dvec3 direction = random_on_hemisphere(hit_record.normal);
+    return 0.5f * ray_color(Ray(hit_record.p, direction), depth-1, world);
   }
 
   glm::dvec3 unit_direction = glm::normalize(ray.direction());

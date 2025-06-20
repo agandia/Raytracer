@@ -13,6 +13,7 @@ int main() {
   Camera cam;
   cam.aspect_ratio = 16.0 / 9.0; // Set the aspect ratio to 16:9
   cam.image_width = 400;
+  cam.max_depth = 50; // Set the maximum recursion depth for ray tracing
 
   cam.render(world);
 }
