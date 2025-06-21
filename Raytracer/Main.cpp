@@ -28,9 +28,14 @@ int main() {
   cam.image_width = 400;
   cam.samples_per_pixel = 100; // Set the number of samples per pixel for anti-aliasing
   cam.max_depth = 50; // Set the maximum recursion depth for ray tracing
+  
   cam.vertical_fov = 90.0;
   cam.look_from = glm::dvec3(-2.0, 2.0, 1.0); // Set the camera position
   cam.look_at = glm::dvec3(0.0, 0.0, -1.0); // Set the point the camera is looking at
   cam.view_up = glm::dvec3(0.0, 1.0, 0.0); // Set the up direction for the camera
+
+  cam.defocus_angle = 10.0; // Set the defocus angle to 10 for a slight blur effect
+  cam.focus_distance = 3.4;
+
   cam.render(world);
 }

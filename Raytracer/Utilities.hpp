@@ -46,6 +46,14 @@ inline glm::dvec3 random_unit_vector() {
   }
 }
 
+inline glm::dvec3 random_in_unit_disk() {
+  while (true) {
+    glm::dvec3 p = glm::dvec3(random_double(-1.0, 1.0), random_double(-1.0, 1.0), 0.0);
+    if (glm::length2(p) < 1.0)
+      return p;
+  }
+}
+
 inline glm::dvec3 random_on_hemisphere(const glm::dvec3& normal) {
   glm::dvec3 on_unit_sphere = random_unit_vector();
   if (glm::dot(on_unit_sphere, normal) > 0.0) { // In the same hemisphere as the normal
