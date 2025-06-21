@@ -30,23 +30,31 @@ void Camera::initialize() {
 
   pixel_samples_scale = 1.0f / samples_per_pixel;
 
-  center = glm::dvec3(0.0); // Set the camera position at the origin
+  center = look_from; // Set the camera position at the origin
 
   // Determine the viewport dimensions.
-  const double focal_length = 1.0; // Distance from camera to focal plane
-  const double viewport_height = 2.0; // Height of the viewport
+  const double focal_length = glm::length(look_from - look_at); // Distance from camera to focal plane
+  //const double theta = degrees_to_radians(vertical_fov);
+  const double theta = glm::radians(vertical_fov);
+  const double h = std::tan(theta / 2);
+  const double viewport_height = 2.0 * h * focal_length; // Height of the viewport
   const double viewport_width = viewport_height * (double(image_width) / image_height); // Width of the viewport
 
-// Calculate two vectors across the horizontal and down the vertical viewport edges
-  const glm::dvec3 viewport_u = glm::vec3(viewport_width, 0.0, 0.0); // Horizontal vector
-  const glm::dvec3 viewport_v = glm::vec3(0.0, -viewport_height, 0.0); // Vertical vector
+  // Calculate the u,v,w basis vectors for the camera coordinate system
+  w = glm::normalize(look_from - look_at); // Direction from camera to focal point
+  u = glm::normalize(glm::cross(view_up, w)); // Perpendicular vector to w in the up direction
+  v = glm::cross(w, u); // Perpendicular vector to both w and u
+
+  // Calculate two vectors across the horizontal and down the vertical viewport edges
+  const glm::dvec3 viewport_u = viewport_width * u; // Horizontal vector
+  const glm::dvec3 viewport_v = viewport_height * -v; // Vertical vector
 
   // Calculate the  horizontal and vertical delta vectors from pixel to pixel
   pixel_delta_u = viewport_u / double(image_width); // Horizontal delta vector
   pixel_delta_v = viewport_v / double(image_height); // Vertical delta vector
 
   // Calculate the location of of the upper left pixel
-  const glm::dvec3 viewport_upper_left = center - glm::dvec3(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+  const glm::dvec3 viewport_upper_left = center - (focal_length * w) - viewport_u / 2.0 - viewport_v / 2.0;
   pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 }
 
