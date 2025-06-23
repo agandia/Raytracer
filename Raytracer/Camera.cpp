@@ -71,10 +71,12 @@ Ray Camera::get_ray(int i, int j) const {
     + ((i + offset.x) * pixel_delta_u)
     + ((j + offset.y) * pixel_delta_v);
 
-  auto ray_origin = (defocus_angle <= 0.0) ? center : defocus_disk_sample();
-  auto ray_direction = pixel_sample - ray_origin;
+  glm::dvec3 ray_origin = (defocus_angle <= 0.0) ? center : defocus_disk_sample();
+  glm::dvec3 ray_direction = pixel_sample - ray_origin;
+  double ray_time = random_double();
 
-  return Ray(ray_origin, ray_direction);
+
+  return Ray(ray_origin, ray_direction, ray_time);
 }
 
 glm::dvec3 Camera::sample_square() const {

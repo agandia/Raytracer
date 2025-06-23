@@ -2,6 +2,7 @@
 
 #include "Ray.hpp"
 #include "Interval.hpp"
+#include "AABB.hpp"
 #include <memory>
 
 class Material; // Forward declaration of Material class
@@ -11,7 +12,9 @@ class HitRecord {
     glm::dvec3 p;                       ///< Point of intersection
     glm::dvec3 normal;                  ///< Normal at the intersection point
     std::shared_ptr<Material> material; ///< Material at the intersection point
-    double t;                           ///< Ray parameter at the intersection
+    double t;                           ///< Time t at the intersection
+    double u;                           ///< Texture coordinate u
+    double v;                           ///< Texture coordinate v
     bool front_face;                    ///< Indicates if the ray hit the front face of the object
 
     void set_face_normal(const Ray& r, const glm::dvec3& outward_normal) {
@@ -27,4 +30,6 @@ class Hittable {
     virtual bool hit(const Ray& r, Interval t, HitRecord& rec) const = 0;
     // Virtual destructor for proper cleanup of derived classes
     virtual ~Hittable() = default;
+
+    virtual AABB bounding_box() const = 0; ///< Get the bounding box of the object
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Hittable.hpp"
+#include "ITexture.hpp"
 #include "Utilities.hpp"
 #include <glm/glm.hpp>
 
@@ -14,7 +15,9 @@ public:
 
 class Lambertian : public Material {
 public:
-  Lambertian(const glm::vec3& albedo) : albedo(albedo) {}
+  Lambertian(const glm::vec3& albedo) : texture(std::make_shared<SolidColorTexture>(albedo)) {}
+  Lambertian(std::shared_ptr<ITexture>texture) : texture(texture) {}
+
   bool scatter(const Ray& in, const HitRecord& rec, glm::vec3& attenuation, Ray& scattered) const override {
     glm::dvec3 scatter_direction = rec.normal + random_unit_vector();
 
@@ -22,13 +25,13 @@ public:
     if (near_zero(scatter_direction)) {
       scatter_direction = rec.normal; // Use the normal as a fallback direction
     }
-    scattered = Ray(rec.p, scatter_direction);
-    attenuation = albedo;
+    scattered = Ray(rec.p, scatter_direction, in.time());
+    attenuation = texture->color_value(rec.u, rec.v, rec.p);
     return true;
   }
 
 private:
-  glm::vec3 albedo;
+  std::shared_ptr<ITexture> texture;
 };
 
 class Metal : public Material {
@@ -38,7 +41,7 @@ class Metal : public Material {
     bool scatter(const Ray& in, const HitRecord& rec, glm::vec3& attenuation, Ray& scattered) const override {
         glm::dvec3 reflected = reflect(in.direction(), rec.normal);
         reflected = glm::normalize(reflected) + (fuzz * random_unit_vector()); // Normalize the reflected direction
-        scattered = Ray(rec.p, reflected);
+        scattered = Ray(rec.p, reflected, in.time());
         attenuation = albedo;
         return (dot(scattered.direction(), rec.normal) > 0);
     }
@@ -69,7 +72,7 @@ class Dielectric : public Material {
         } else {
             direction = refract(unit_direction, rec.normal, etai_over_etat);
         }
-        scattered = Ray(rec.p, refracted);
+        scattered = Ray(rec.p, refracted, in.time());
         return true;
     }
   private:

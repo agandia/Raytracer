@@ -6,6 +6,7 @@ void HitPool::clear() { hit_objects.clear(); }
 
 void HitPool::add(std::shared_ptr<Hittable> object) {
   hit_objects.push_back(object);
+  bbox = AABB(bbox, object->bounding_box());
 }
 
 bool HitPool::hit(const Ray& r, Interval interval, HitRecord& rec) const {
