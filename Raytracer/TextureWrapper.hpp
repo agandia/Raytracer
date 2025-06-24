@@ -50,7 +50,7 @@ class NoiseTexture : public ITexture {
     NoiseTexture(double scale) : scale(scale) {}
 
     glm::dvec3 color_value(double u, double v, const glm::dvec3& point) const override {
-      return glm::dvec3(0.5) * (1.0 + glm::sin(scale * point.z + 10.0 * noise.turbulence(7.0 * point))); // Make sure we don't end up with negative values by shifting the noise output from [-1, 1] to [0, 1]
+      return glm::dvec3(0.5) * (1.0 + glm::sin(scale * point.z + 10.0 * noise.turbulence(point, 7))); // Make sure we don't end up with negative values by shifting the noise output from [-1, 1] to [0, 1]
     }
 
   private:
