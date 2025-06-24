@@ -129,9 +129,9 @@ void earth() {
 void perlin_spheres() {
   HitPool world;
 
-  auto pertext = std::make_shared<NoiseTexture>();
-  world.add(std::make_shared<Sphere>(glm::dvec3(0, -1000, 0), 1000, std::make_shared<Lambertian>(pertext)));
-  world.add(std::make_shared<Sphere>(glm::dvec3(0, 2, 0), 2, std::make_shared<Lambertian>(pertext)));
+  auto perlintext = std::make_shared<NoiseTexture>(4.0);
+  world.add(std::make_shared<Sphere>(glm::dvec3(0, -1000, 0), 1000, std::make_shared<Lambertian>(perlintext)));
+  world.add(std::make_shared<Sphere>(glm::dvec3(0, 2, 0), 2, std::make_shared<Lambertian>(perlintext)));
 
   Camera cam;
 
