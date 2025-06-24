@@ -5,5 +5,6 @@ int main() {
   case 1: bouncing_spheres();  break;
   case 2: checkered_spheres(); break;
   case 3: earth(); break;
+  case 4: perlin_spheres(); break;
   }
 }

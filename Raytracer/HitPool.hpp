@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Hittable.hpp"
+#include "Interval.hpp"
 #include "Ray.hpp"
 #include "AABB.hpp"
 

@@ -1,7 +1,7 @@
 # include "ImageLoader.hpp"
 
 
-#include <cstdlib>
+#include <iostream>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG

@@ -4,6 +4,7 @@
 #include "Interval.hpp"
 #include "AABB.hpp"
 #include <memory>
+#include <glm/glm.hpp>
 
 class Material; // Forward declaration of Material class
 

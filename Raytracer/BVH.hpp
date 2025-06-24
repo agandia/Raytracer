@@ -1,6 +1,11 @@
 #pragma once
 
+#include <vector>
+#include <memory>
+
 #include "AABB.hpp"
+#include "Ray.hpp"
+#include "Interval.hpp"
 #include "Hittable.hpp"
 #include "HitPool.hpp"
 

@@ -105,10 +105,8 @@ void earth() {
   // World
   HitPool world; // Create pool to hold  all the objects in the scene that can be hit by rays
 
-  //std::shared_ptr<Image> earth_texture= std::make_shared<Image>("earthmap.jpg"); // Create a image from file
-  auto earth_texture= std::make_shared<ImageTexture>("earthmap.jpg"); // Create a image from file
-  //std::shared_ptr<Lambertian> earth_surface = std::make_shared<Lambertian>(earth_texture);
-  auto earth_surface = std::make_shared<Lambertian>(earth_texture);
+  std::shared_ptr<ImageTexture> earth_texture= std::make_shared<ImageTexture>("earthmap.jpg"); // Create a image from file
+  std::shared_ptr<Lambertian> earth_surface = std::make_shared<Lambertian>(earth_texture);
   world.add(std::make_shared<Sphere>(glm::dvec3(0.0, 0.0, 0.0), 2.0, earth_surface));
 
   // Camera
@@ -124,6 +122,30 @@ void earth() {
   cam.view_up = glm::dvec3(0.0, 1.0, 0.0); // Set the up direction for the camera
 
   cam.defocus_angle = 0.0;
+
+  cam.render(world);
+}
+
+void perlin_spheres() {
+  HitPool world;
+
+  auto pertext = std::make_shared<NoiseTexture>();
+  world.add(std::make_shared<Sphere>(glm::dvec3(0, -1000, 0), 1000, std::make_shared<Lambertian>(pertext)));
+  world.add(std::make_shared<Sphere>(glm::dvec3(0, 2, 0), 2, std::make_shared<Lambertian>(pertext)));
+
+  Camera cam;
+
+  cam.aspect_ratio = 16.0 / 9.0;
+  cam.image_width = 400;
+  cam.samples_per_pixel = 100;
+  cam.max_depth = 50;
+
+  cam.vertical_fov = 20;
+  cam.look_from = glm::dvec3(13, 2, 3);
+  cam.look_at = glm::dvec3(0, 0, 0);
+  cam.view_up = glm::dvec3(0, 1, 0);
+
+  cam.defocus_angle = 0;
 
   cam.render(world);
 }

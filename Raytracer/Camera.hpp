@@ -1,7 +1,9 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 #include "Hittable.hpp"
-#include "Material.hpp"
+#include "Ray.hpp"
 
 class Camera {
 public:

@@ -4,6 +4,22 @@
 #include <glm/glm.hpp>
 #include "ITexture.hpp"
 #include "ImageLoader.hpp"
+#include "Perlin.hpp"
+
+
+class SolidColorTexture : public ITexture {
+
+public:
+  SolidColorTexture(const glm::dvec3& albedo) : albedo_(albedo) {}
+  SolidColorTexture(double r, double g, double b) : SolidColorTexture(glm::dvec3(r, g, b)) {}
+
+  glm::dvec3 color_value(double u, double v, const glm::dvec3& point) const override {
+    return albedo_;
+  }
+
+private:
+  glm::dvec3 albedo_;
+};
 
 class CheckerTexture : public ITexture {
 public:
@@ -27,4 +43,16 @@ class ImageTexture : public ITexture {
 
   private:
     Image image;
+};
+
+class NoiseTexture : public ITexture {
+  public:
+    NoiseTexture() {}
+
+    glm::dvec3 color_value(double u, double v, const glm::dvec3& point) const override {
+      return glm::dvec3(1.0) * noise.noise(point); // Placeholder
+    }
+
+  private:
+    PerlinNoise noise;
 };

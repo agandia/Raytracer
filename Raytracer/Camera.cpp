@@ -1,6 +1,9 @@
+#include <iostream>
+
 #include "Camera.hpp"
 #include "Utilities.hpp"
-#include <iostream>
+#include "Material.hpp"
+
 
 void Camera::render(const Hittable& world) {
   initialize();

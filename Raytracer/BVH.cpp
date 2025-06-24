@@ -1,5 +1,5 @@
 #include "BVH.hpp"
-#include "Utilities.hpp"
+
 #include <algorithm>
 
 BVHNode::BVHNode(std::vector<std::shared_ptr<Hittable>>& hit_objects, size_t start, size_t end) {

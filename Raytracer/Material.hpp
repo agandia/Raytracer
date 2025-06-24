@@ -1,9 +1,11 @@
 #pragma once
 
 #include "Hittable.hpp"
-#include "ITexture.hpp"
+#include "TextureWrapper.hpp"
+#include "Ray.hpp"
 #include "Utilities.hpp"
 #include <glm/glm.hpp>
+#include <memory>
 
 class Material {
 public:

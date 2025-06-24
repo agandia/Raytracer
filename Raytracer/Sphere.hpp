@@ -1,10 +1,12 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <memory>
+
 #include "Hittable.hpp"
+#include "AABB.hpp"
 #include "Interval.hpp"
 #include "Ray.hpp"
-#include <memory>
 
 class Material;
 
