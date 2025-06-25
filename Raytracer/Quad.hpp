@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 
 #include "Hittable.hpp"
+#include "HitPool.hpp"
 #include "Material.hpp"
 #include "AABB.hpp"
 #include "Ray.hpp"
@@ -33,6 +34,8 @@ class Quad : public Hittable {
     double D;
 
 };
+
+std::shared_ptr<HitPool> box(const glm::dvec3& corner_a, const glm::dvec3& corner_b, std::shared_ptr<Material> m);
 
 class Triangle : public Quad {
 public:

@@ -221,3 +221,41 @@ void simple_light() {
 
   cam.render(world);
 }
+
+void cornell_box() {
+  HitPool world;
+
+  // Materials
+  auto red = std::make_shared<Lambertian>(glm::vec3(.65, 0.05, 0.05));
+  auto white = std::make_shared<Lambertian>(glm::vec3(0.73, 0.73, 0.73));
+  auto green = std::make_shared<Lambertian>(glm::vec3(0.12, 0.45, 0.15));
+  auto light = std::make_shared<DiffuseLight>(glm::vec3(15.f, 15.f, 15.f));
+
+  // Quads
+  world.add(std::make_shared<Quad>(glm::dvec3(555, 0, 0), glm::dvec3(0, 555, 0), glm::dvec3(0, 0, 555), green));
+  world.add(std::make_shared<Quad>(glm::dvec3(0, 0, 0), glm::dvec3(0, 555, 0), glm::dvec3(0, 0, 555), red));
+  world.add(std::make_shared<Quad>(glm::dvec3(343, 554, 332), glm::dvec3(-130, 0, 0), glm::dvec3(0, 0, -105), light));
+  world.add(std::make_shared<Quad>(glm::dvec3(0,0,0), glm::dvec3(555, 0, 0), glm::dvec3(0, 0, 555), white));
+  world.add(std::make_shared<Quad>(glm::dvec3(555, 555, 555), glm::dvec3(-555, 0, 0), glm::dvec3(0, 0, -555), white));
+  world.add(std::make_shared<Quad>(glm::dvec3(0, 0, 555), glm::dvec3(555, 0, 0), glm::dvec3(0, 555, 0), white));
+
+  world.add(box(glm::dvec3(130, 0, 65), glm::dvec3(295, 165, 230), white));
+  world.add(box(glm::dvec3(265, 0, 295), glm::dvec3(430, 330, 460), white));
+
+  Camera cam;
+
+  cam.aspect_ratio = 16.0 / 9.0;
+  cam.image_width = 600;
+  cam.samples_per_pixel = 200;
+  cam.max_depth = 50;
+  cam.background = glm::vec3(0.0, 0.0, 0.0); // Black background
+
+  cam.vertical_fov = 40;
+  cam.look_from = glm::dvec3(278, 278, -800);
+  cam.look_at = glm::dvec3(278, 278, 0);
+  cam.view_up = glm::dvec3(0, 1, 0);
+
+  cam.defocus_angle = 0;
+
+  cam.render(world);
+}
