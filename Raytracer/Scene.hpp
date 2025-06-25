@@ -166,8 +166,17 @@ void quads() {
   auto lower_teal = std::make_shared<Lambertian>(glm::vec3(0.2, 0.8, 0.8));
 
   // Quads
-  //world.add(std::make_shared<Triangle>(glm::dvec3(-3, -2, 5), glm::dvec3(0, 0, -4), glm::dvec3(0, 4, 0), left_red));
-  //world.add(std::make_shared<Ellipse>(glm::dvec3(-2, -2, 0), glm::dvec3(4, 0, 0), glm::dvec3(0, 4, 0), back_green));
+  //glm::dvec3 b0(-2.0, 0.0, 0.0);
+  //glm::dvec3 b1(2.0, 0.0, 0.0);
+  //glm::dvec3 b2(0.0, 3.0, 0.0);
+  //glm::dvec3 base_mid = 0.5 * (b0 + b1);
+  //world.add(std::make_shared<Triangle>(b0, b1-b0, b2 - b0 - base_mid, left_red));
+  //world.add(pyramid(glm::dvec3(0, 0, 0), glm::dvec3(4, 0, 0), glm::dvec3(0, 0, -4), 4, back_green));
+   
+  //world.add(std::make_shared<Ellipse>(glm::dvec3(2, 5, 3), glm::dvec3(4, 0, 0), glm::dvec3(0, 4, 0), back_green));
+  // They get expensive very vert quickly
+  //world.add(cylindroid(glm::dvec3(0, 0, 0), glm::dvec3(4, 0, 0), glm::dvec3(0, 0, -4), 8, 32, back_green));
+
   world.add(std::make_shared<Quad>(glm::dvec3(-3, -2, 5), glm::dvec3(0, 0, -4), glm::dvec3(0, 4, 0), left_red));
   world.add(std::make_shared<Quad>(glm::dvec3(-2, -2, 0), glm::dvec3(4, 0, 0), glm::dvec3(0, 4, 0), back_green));
   world.add(std::make_shared<Quad>(glm::dvec3(3, -2, 1), glm::dvec3(0, 0, 4), glm::dvec3(0, 4, 0), right_blue));
@@ -183,7 +192,7 @@ void quads() {
   cam.background = glm::vec3(0.7, 0.8, 1.0); // Set the background color to a light blue
 
   cam.vertical_fov = 80;
-  cam.look_from = glm::dvec3(0,0, 9);
+  cam.look_from = glm::dvec3(0, 10, 9);
   cam.look_at = glm::dvec3(0, 0, 0);
   cam.view_up = glm::dvec3(0, 1, 0);
 
@@ -232,12 +241,23 @@ void cornell_box() {
   auto light = std::make_shared<DiffuseLight>(glm::vec3(15.f, 15.f, 15.f));
 
   // Quads
+  world.add(std::make_shared<Triangle>(glm::dvec3(343, 0, 332), glm::dvec3(0, 0, 130), glm::dvec3(0, 130, 0), red));
   world.add(std::make_shared<Quad>(glm::dvec3(555, 0, 0), glm::dvec3(0, 555, 0), glm::dvec3(0, 0, 555), green));
   world.add(std::make_shared<Quad>(glm::dvec3(0, 0, 0), glm::dvec3(0, 555, 0), glm::dvec3(0, 0, 555), red));
   world.add(std::make_shared<Quad>(glm::dvec3(343, 554, 332), glm::dvec3(-130, 0, 0), glm::dvec3(0, 0, -105), light));
   world.add(std::make_shared<Quad>(glm::dvec3(0,0,0), glm::dvec3(555, 0, 0), glm::dvec3(0, 0, 555), white));
   world.add(std::make_shared<Quad>(glm::dvec3(555, 555, 555), glm::dvec3(-555, 0, 0), glm::dvec3(0, 0, -555), white));
   world.add(std::make_shared<Quad>(glm::dvec3(0, 0, 555), glm::dvec3(555, 0, 0), glm::dvec3(0, 555, 0), white));
+
+  std::shared_ptr<Hittable> box1 = box(glm::dvec3(0, 0, 0), glm::dvec3(165, 330, 165), white);
+  box1 = make_shared<RotateYAxis>(box1, 15);
+  box1 = make_shared<Translate>(box1, glm::vec3(265, 0, 295));
+  world.add(box1);
+
+  std::shared_ptr<Hittable> box2 = box(glm::dvec3(0, 0, 0), glm::dvec3(165, 165, 165), white);
+  box2 = make_shared<RotateYAxis>(box2, -18);
+  box2 = make_shared<Translate>(box2, glm::vec3(130, 0, 65));
+  world.add(box2);
 
   world.add(box(glm::dvec3(130, 0, 65), glm::dvec3(295, 165, 230), white));
   world.add(box(glm::dvec3(265, 0, 295), glm::dvec3(430, 330, 460), white));

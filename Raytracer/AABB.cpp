@@ -75,5 +75,14 @@ void AABB::pad_to_minimum()
   if (z.size() < delta) z = z.expand(delta);
 }
 
+
+AABB operator+(const AABB& bbox, const glm::dvec3& offset) {
+  return AABB(bbox.x + offset.x, bbox.y + offset.y, bbox.z + offset.z);
+}
+
+AABB operator+(const glm::dvec3& offset, const AABB& bbox) {
+  return bbox + offset;
+}
+
 const AABB AABB::empty = AABB::AABB(Interval::empty, Interval::empty, Interval::empty);
 const AABB AABB::universe = AABB::AABB(Interval::universe, Interval::universe, Interval::universe);

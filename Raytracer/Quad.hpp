@@ -54,6 +54,7 @@ public:
   }
 };
 
+std::shared_ptr<HitPool> pyramid(const glm::dvec3& Q, const glm::dvec3& u, const glm::dvec3& v, double apex, std::shared_ptr<Material> m);
 
 class Ellipse : public Quad {
 public:
@@ -75,3 +76,7 @@ public:
     return true;
   }
 };
+
+std::shared_ptr<HitPool> cylindroid(const glm::dvec3& Q, const glm::dvec3& u, const glm::dvec3& v, double height,int segments, std::shared_ptr<Material> m);
+
+std::shared_ptr<HitPool> cone(const glm::dvec3& Q, const glm::dvec3& u, const glm::dvec3& v, double height, int segments, std::shared_ptr<Material> m);

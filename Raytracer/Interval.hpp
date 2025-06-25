@@ -38,3 +38,8 @@ public:
 
   static const Interval empty, universe;
 };
+
+
+Interval operator+(const Interval& ival, double displacement);
+
+Interval operator+(double displacement, const Interval& ival);

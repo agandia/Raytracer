@@ -34,3 +34,36 @@ class Hittable {
 
     virtual AABB bounding_box() const = 0; ///< Get the bounding box of the object
 };
+
+class Translate : public Hittable {
+  public:
+    Translate(std::shared_ptr<Hittable> hittable, const glm::dvec3& offset)
+        : hittable(hittable), offset(offset) {
+      bbox = hittable->bounding_box() + offset;
+    }
+  
+    inline AABB bounding_box() const override { return bbox; }
+  
+    bool hit(const Ray& r, Interval t, HitRecord& rec) const override;
+
+  private:
+    std::shared_ptr<Hittable> hittable; ///< Pointer to the hittable object
+    glm::dvec3 offset;              ///< Offset for translation
+    AABB bbox;                     ///< Bounding box of the translated object
+};
+
+// A bit limiting in terms of rotations but most objects we want to render are presented in the xz plane.
+class RotateYAxis : public Hittable {
+public:
+  RotateYAxis(std::shared_ptr<Hittable> object, double angle);
+  bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const override;
+  inline AABB bounding_box() const override { return bbox; }
+
+private:
+  std::shared_ptr<Hittable> hittable;
+  double sin_theta;
+  double cos_theta;
+  AABB bbox;
+
+
+};

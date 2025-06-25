@@ -24,3 +24,7 @@ public:
     void pad_to_minimum();
 
 };
+
+AABB operator+(const AABB& bbox, const glm::dvec3& offset);
+
+AABB operator+(const glm::dvec3& offset, const AABB& bbox);
