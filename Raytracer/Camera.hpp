@@ -12,6 +12,7 @@ public:
   int     image_width       = 100;  // Rendered image width in pixels
   int     samples_per_pixel = 100;  // Number of samples per pixel
   int     max_depth         = 10;   // Maximum number of ray bounces into the scene
+  glm::vec3 background;             // Scene Background color
 
   double  vertical_fov      = 90.0; // Vertical field of view in degrees
 

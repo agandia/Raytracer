@@ -12,6 +12,7 @@ public:
     virtual ~Material() = default;
     // Returns the attenuation and scattered ray if the ray is scattered, otherwise returns false
     virtual bool scatter(const Ray& in, const HitRecord& rec, glm::vec3& attenuation, Ray& scattered) const { return false; }
+    virtual glm::vec3 emitted(double u, double v, const glm::dvec3& point) const { return glm::vec3(0.0f); }
     
 };
 
@@ -86,4 +87,16 @@ class Dielectric : public Material {
         r0 = r0 * r0;
         return r0 + (1 - r0) * pow((1 - cosine), 5);
     }
+};
+
+class DiffuseLight : public Material {
+  public:
+    DiffuseLight(std::shared_ptr<ITexture> texture) : texture(texture) {}
+    DiffuseLight(const glm::vec3& color) : texture(std::make_shared<SolidColorTexture>(color)) {}
+    glm::vec3 emitted(double u, double v, const glm::dvec3& point) const override{
+        return texture->color_value(u, v, point);
+    }
+
+  private:
+    std::shared_ptr<ITexture> texture; // Texture for the emitted light color
 };

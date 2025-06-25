@@ -65,6 +65,7 @@ void bouncing_spheres() {
   cam.image_width = 400;
   cam.samples_per_pixel = 50; // Set the number of samples per pixel for anti-aliasing
   cam.max_depth = 50; // Set the maximum recursion depth for ray tracing
+  cam.background = glm::vec3(0.7, 0.8, 1.0); // Set the background color to a light blue
 
   cam.vertical_fov = 20.0;
   cam.look_from = glm::dvec3(18.0, 4.0, 5.0); // Set the camera position
@@ -91,6 +92,7 @@ void checkered_spheres() {
   cam.image_width = 400;
   cam.samples_per_pixel = 100; // Set the number of samples per pixel for anti-aliasing
   cam.max_depth = 50; // Set the maximum recursion depth for ray tracing
+  cam.background = glm::vec3(0.7, 0.8, 1.0); // Set the background color to a light blue
 
   cam.vertical_fov = 20.0;
   cam.look_from = glm::dvec3(13.0, 2.0, 3.0); // Set the camera position
@@ -116,6 +118,7 @@ void earth() {
   cam.image_width = 400;
   cam.samples_per_pixel = 100; // Set the number of samples per pixel for anti-aliasing
   cam.max_depth = 50; // Set the maximum recursion depth for ray tracing
+  cam.background = glm::vec3(0.7, 0.8, 1.0); // Set the background color to a light blue
 
   cam.vertical_fov = 20.0;
   cam.look_from = glm::dvec3(0.0, 0.0, 12.0); // Set the camera position
@@ -140,6 +143,7 @@ void perlin_spheres() {
   cam.image_width = 400;
   cam.samples_per_pixel = 100;
   cam.max_depth = 50;
+  cam.background = glm::vec3(0.7, 0.8, 1.0); // Set the background color to a light blue
 
   cam.vertical_fov = 20;
   cam.look_from = glm::dvec3(13, 2, 3);
@@ -162,6 +166,8 @@ void quads() {
   auto lower_teal = std::make_shared<Lambertian>(glm::vec3(0.2, 0.8, 0.8));
 
   // Quads
+  //world.add(std::make_shared<Triangle>(glm::dvec3(-3, -2, 5), glm::dvec3(0, 0, -4), glm::dvec3(0, 4, 0), left_red));
+  //world.add(std::make_shared<Ellipse>(glm::dvec3(-2, -2, 0), glm::dvec3(4, 0, 0), glm::dvec3(0, 4, 0), back_green));
   world.add(std::make_shared<Quad>(glm::dvec3(-3, -2, 5), glm::dvec3(0, 0, -4), glm::dvec3(0, 4, 0), left_red));
   world.add(std::make_shared<Quad>(glm::dvec3(-2, -2, 0), glm::dvec3(4, 0, 0), glm::dvec3(0, 4, 0), back_green));
   world.add(std::make_shared<Quad>(glm::dvec3(3, -2, 1), glm::dvec3(0, 0, 4), glm::dvec3(0, 4, 0), right_blue));
@@ -174,10 +180,41 @@ void quads() {
   cam.image_width = 400;
   cam.samples_per_pixel = 100;
   cam.max_depth = 50;
+  cam.background = glm::vec3(0.7, 0.8, 1.0); // Set the background color to a light blue
 
   cam.vertical_fov = 80;
   cam.look_from = glm::dvec3(0,0, 9);
   cam.look_at = glm::dvec3(0, 0, 0);
+  cam.view_up = glm::dvec3(0, 1, 0);
+
+  cam.defocus_angle = 0;
+
+  cam.render(world);
+}
+
+void simple_light() {
+  HitPool world;
+
+  // Materials
+  auto perlintext = std::make_shared<NoiseTexture>(4.0);
+  world.add(std::make_shared<Sphere>(glm::dvec3(0, -1000, 0), 1000, std::make_shared<Lambertian>(perlintext)));
+  world.add(std::make_shared<Sphere>(glm::dvec3(0, 2, 0), 2, std::make_shared<Lambertian>(perlintext)));
+
+  // Quad Light
+  std::shared_ptr<DiffuseLight> light = std::make_shared<DiffuseLight>(glm::vec3(4, 4, 4));  
+  world.add(std::make_shared<Quad>(glm::dvec3(3, 1, -2), glm::dvec3(2, 0, 0), glm::dvec3(0, 2, 0), light));
+
+  Camera cam;
+
+  cam.aspect_ratio = 16.0 / 9.0;
+  cam.image_width = 400;
+  cam.samples_per_pixel = 100;
+  cam.max_depth = 50;
+  cam.background = glm::vec3(0.f, 0.f, 0.f); // Set the background color to a light blue
+
+  cam.vertical_fov = 20;
+  cam.look_from = glm::dvec3(26, 3, 6);
+  cam.look_at = glm::dvec3(0, 2, 0);
   cam.view_up = glm::dvec3(0, 1, 0);
 
   cam.defocus_angle = 0;

@@ -95,19 +95,27 @@ glm::vec3 Camera::ray_color(const Ray& ray, int depth, const Hittable& world) co
 
   HitRecord hit_record;
   // Add a small delta to the interval to avoid self-intersection (shadow acne)
-  if (world.hit(ray, Interval(0.00001, infinity), hit_record)) {
-    Ray scattered_ray;
-    glm::vec3 attenuation;
-    if(hit_record.material->scatter(ray, hit_record, attenuation, scattered_ray)) {
-      // If the material scatters the ray, recursively calculate the color
-      return attenuation * ray_color(scattered_ray, depth - 1, world);
-    }
-    return glm::vec3(0.0f); // If the material does not scatter, return black
+  if (!world.hit(ray, Interval(0.00001, infinity), hit_record)) {
+    // If the ray does not hit anything, return the background color
+    return background;
   }
 
-  glm::dvec3 unit_direction = glm::normalize(ray.direction());
-  float t = 0.5f * ((float)unit_direction.y + 1.0f); // Map y component to [0, 1]
-  return (1.0f - t) * glm::vec3(1.0f) + t * glm::vec3(0.5f, 0.7f, 1.0f); // Gradient from white to blue for the background
+  Ray scattered_ray;
+  glm::vec3 attenuation;
+  glm::vec3 emitted_color = hit_record.material->emitted(hit_record.u, hit_record.v, hit_record.p);
+
+  if(!hit_record.material->scatter(ray, hit_record, attenuation, scattered_ray)) {
+    // If the material scatters the ray, recursively calculate the color
+    return emitted_color;
+  }
+
+  glm::vec3 scattered_color = attenuation * ray_color(scattered_ray, depth - 1, world);
+  return emitted_color + scattered_color; // Combine emitted color and scattered color
+  
+  // Old code to have a blueish gradient background
+  //glm::dvec3 unit_direction = glm::normalize(ray.direction());
+  //float t = 0.5f * ((float)unit_direction.y + 1.0f); // Map y component to [0, 1]
+  //return (1.0f - t) * glm::vec3(1.0f) + t * glm::vec3(0.5f, 0.7f, 1.0f); // Gradient from white to blue for the background
 }
 
 glm::dvec3 Camera::defocus_disk_sample() const

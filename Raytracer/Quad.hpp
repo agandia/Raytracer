@@ -16,13 +16,13 @@ class Quad : public Hittable {
 
     virtual void set_bounding_box();
 
-    inline AABB bounding_box() const override { return bbox; }
+    inline virtual AABB bounding_box() const override { return bbox; }
 
-    bool hit(const Ray& ray, Interval ray_t, HitRecord& rec) const override;
+    virtual bool hit(const Ray& ray, Interval ray_t, HitRecord& rec) const override;
 
     virtual bool is_interior(double a, double b, HitRecord& rec) const;
 
-  private:
+  protected:
     glm::dvec3 Q; // origin of the quad
     glm::dvec3 u , v; // vectors spanning the edges of the quad
     glm::dvec3 w; // constant from a vector orthogonal to the quad w = n / dot(n, (u x v)); is this the unit/normalized normal vector of the quad?
@@ -32,4 +32,43 @@ class Quad : public Hittable {
     glm::dvec3 normal;
     double D;
 
+};
+
+class Triangle : public Quad {
+public:
+  Triangle(const glm::dvec3& o, const glm::dvec3& aa, const glm::dvec3& ab, std::shared_ptr<Material> m)
+    : Quad(o, aa, ab, m)
+  {
+  }
+
+  virtual bool is_interior(double a, double b, HitRecord& rec) const override {
+    if ((a < 0) || (b < 0) || (a + b > 1))
+      return false;
+
+    rec.u = a;
+    rec.v = b;
+    return true;
+  }
+};
+
+
+class Ellipse : public Quad {
+public:
+  Ellipse(const glm::dvec3& center, const glm::dvec3& side_A, const glm::dvec3& side_B, std::shared_ptr<Material> m) 
+    : Quad(center, side_A, side_B, m)
+  {
+  }
+
+  virtual void set_bounding_box() override {
+    bbox = AABB(Q - u - v, Q + u + v);
+  }
+
+  virtual bool is_interior(double a, double b, HitRecord& rec) const override {
+    if ((a * a + b * b) > 1)
+      return false;
+
+    rec.u = a / 2 + 0.5;
+    rec.v = b / 2 + 0.5;
+    return true;
+  }
 };
