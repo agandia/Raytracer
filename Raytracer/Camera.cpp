@@ -1,4 +1,8 @@
 #include <iostream>
+#include <fstream>
+#include <chrono>
+#include <omp.h>
+
 
 #include "Camera.hpp"
 #include "Utilities.hpp"
@@ -7,23 +11,50 @@
 
 void Camera::render(const Hittable& world) {
   initialize();
-  //Render
-  std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
 
-  for (int j = 0; j < image_height; j++) {
-    std::clog << "\rScanlines remaining: " << image_height - j << ' ' << std::flush;
-    for (int i = 0; i < image_width; i++) {
-      glm::vec3 pixel_color(0.0f); // Initialize pixel color to black
-      for(int sample = 0; sample < samples_per_pixel; sample++) {
-        // Generate a ray for the current pixel
-        Ray ray = get_ray(i, j);
-        pixel_color += ray_color(ray, max_depth, world); // Accumulate color for the pixel
+  const int tile_size = 32;
+  const int num_passes = 10;
+  const int spp_per_pass = samples_per_pixel / num_passes;
+
+  std::vector<glm::vec3> framebuffer(image_width * image_height, glm::vec3(0.0f));
+
+  auto start = std::chrono::high_resolution_clock::now();
+
+  for (int pass = 0; pass < num_passes; ++pass) {
+    std::clog << "\nStarting pass " << (pass + 1) << "/" << num_passes << std::endl;
+
+#pragma omp parallel for collapse(2) schedule(dynamic)
+    for (int tile_y = 0; tile_y < image_height; tile_y += tile_size) {
+      for (int tile_x = 0; tile_x < image_width; tile_x += tile_size) {
+        for (int j = tile_y; j < std::min(tile_y + tile_size, image_height); ++j) {
+          for (int i = tile_x; i < std::min(tile_x + tile_size, image_width); ++i) {
+            glm::vec3 pixel_color(0.0f);
+            for (int s = 0; s < spp_per_pass; ++s) {
+              Ray ray = get_ray(i, j);
+              pixel_color += ray_color(ray, max_depth, world);
+            }
+            framebuffer[j * image_width + i] += pixel_color;
+          }
+        }
       }
+    }
 
-      write_color(std::cout, pixel_samples_scale * pixel_color);
+    std::clog << "\rFinished pass " << (pass + 1) << "/" << num_passes << std::flush;
+  }
+
+  // Final write to image.ppm
+  std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+
+  for (int j = 0; j < image_height ; ++j) {
+    for (int i = 0; i < image_width; ++i) {
+      glm::vec3 color = framebuffer[j * image_width + i] / float(samples_per_pixel);
+      write_color(std::cout, color);
     }
   }
-  std::clog << "\rDone.                   \n";
+
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+  std::clog << "\nDone in " << elapsed.count() << " seconds.\n";
 }
 
 void Camera::initialize() {

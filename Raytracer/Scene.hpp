@@ -2,6 +2,7 @@
 
 #include "BVH.hpp"
 #include "Camera.hpp"
+#include "ConstantMedium.hpp"
 #include "HitPool.hpp"
 #include "Sphere.hpp"
 #include "Quad.hpp"
@@ -31,7 +32,7 @@ void bouncing_spheres() {
       auto choose_mat = random_double();
       glm::dvec3 center(a + 0.9 * random_double(), 0.2, b + 0.9 * random_double());
 
-      if ((center - glm::dvec3(4.0, 0.2, 0.0)).length() > 0.9) {
+      if (glm::length(center - glm::dvec3(4.0, 0.2, 0.0)) > 0.9) {
         std::shared_ptr<Material> sphere_material;
 
         if (choose_mat < 0.8) {
@@ -241,7 +242,7 @@ void cornell_box() {
   auto light = std::make_shared<DiffuseLight>(glm::vec3(15.f, 15.f, 15.f));
 
   // Quads
-  world.add(std::make_shared<Triangle>(glm::dvec3(343, 0, 332), glm::dvec3(0, 0, 130), glm::dvec3(0, 130, 0), red));
+  //world.add(std::make_shared<Triangle>(glm::dvec3(343, 0, 332), glm::dvec3(0, 0, 130), glm::dvec3(0, 130, 0), red));
   world.add(std::make_shared<Quad>(glm::dvec3(555, 0, 0), glm::dvec3(0, 555, 0), glm::dvec3(0, 0, 555), green));
   world.add(std::make_shared<Quad>(glm::dvec3(0, 0, 0), glm::dvec3(0, 555, 0), glm::dvec3(0, 0, 555), red));
   world.add(std::make_shared<Quad>(glm::dvec3(343, 554, 332), glm::dvec3(-130, 0, 0), glm::dvec3(0, 0, -105), light));
@@ -266,6 +267,54 @@ void cornell_box() {
 
   cam.aspect_ratio = 16.0 / 9.0;
   cam.image_width = 600;
+  cam.samples_per_pixel = 64;
+  cam.max_depth = 50;
+  cam.background = glm::vec3(0.0, 0.0, 0.0); // Black background
+
+  cam.vertical_fov = 40;
+  cam.look_from = glm::dvec3(278, 278, -800);
+  cam.look_at = glm::dvec3(278, 278, 0);
+  cam.view_up = glm::dvec3(0, 1, 0);
+
+  cam.defocus_angle = 0;
+
+  cam.render(world);
+}
+
+void cornell_smoke() {
+  HitPool world;
+
+  // Materials
+  auto red = std::make_shared<Lambertian>(glm::vec3(.65, 0.05, 0.05));
+  auto white = std::make_shared<Lambertian>(glm::vec3(0.73, 0.73, 0.73));
+  auto green = std::make_shared<Lambertian>(glm::vec3(0.12, 0.45, 0.15));
+  auto light = std::make_shared<DiffuseLight>(glm::vec3(7.f, 7.f, 7.f));
+
+  // Quads
+  world.add(std::make_shared<Quad>(glm::dvec3(555, 0, 0), glm::dvec3(0, 555, 0), glm::dvec3(0, 0, 555), green));
+  world.add(std::make_shared<Quad>(glm::dvec3(0, 0, 0), glm::dvec3(0, 555, 0), glm::dvec3(0, 0, 555), red));
+  world.add(std::make_shared<Quad>(glm::dvec3(343, 554, 332), glm::dvec3(-130, 0, 0), glm::dvec3(0, 0, -105), light));
+  world.add(std::make_shared<Quad>(glm::dvec3(0, 0, 0), glm::dvec3(555, 0, 0), glm::dvec3(0, 0, 555), white));
+  world.add(std::make_shared<Quad>(glm::dvec3(555, 555, 555), glm::dvec3(-555, 0, 0), glm::dvec3(0, 0, -555), white));
+  world.add(std::make_shared<Quad>(glm::dvec3(0, 0, 555), glm::dvec3(555, 0, 0), glm::dvec3(0, 555, 0), white));
+
+  std::shared_ptr<Hittable> box1 = box(glm::dvec3(0, 0, 0), glm::dvec3(165, 330, 165), white);
+  box1 = make_shared<RotateYAxis>(box1, 15);
+  box1 = make_shared<Translate>(box1, glm::vec3(265, 0, 295));
+  world.add(box1);
+
+  std::shared_ptr<Hittable> box2 = box(glm::dvec3(0, 0, 0), glm::dvec3(165, 165, 165), white);
+  box2 = make_shared<RotateYAxis>(box2, -18);
+  box2 = make_shared<Translate>(box2, glm::vec3(130, 0, 65));
+  world.add(box2);
+
+  world.add(std::make_shared<ConstantMedium>(box1, 0.01, glm::vec3(0.0)));
+  world.add(std::make_shared<ConstantMedium>(box2, 0.01, glm::vec3(1.0)));
+
+  Camera cam;
+
+  cam.aspect_ratio = 16.0 / 9.0;
+  cam.image_width = 600;
   cam.samples_per_pixel = 200;
   cam.max_depth = 50;
   cam.background = glm::vec3(0.0, 0.0, 0.0); // Black background
@@ -273,6 +322,263 @@ void cornell_box() {
   cam.vertical_fov = 40;
   cam.look_from = glm::dvec3(278, 278, -800);
   cam.look_at = glm::dvec3(278, 278, 0);
+  cam.view_up = glm::dvec3(0, 1, 0);
+
+  cam.defocus_angle = 0;
+
+  cam.render(world);
+}
+
+void final_scene(int image_width, int samples_per_pixel, int max_depth) {
+  HitPool boxes1;
+  auto ground = std::make_shared<Lambertian>(glm::vec3(0.48, 0.83, 0.53));
+
+  int boxes_per_side = 20;
+  for (int i = 0; i < boxes_per_side; i++) {
+    for (int j = 0; j < boxes_per_side; j++) {
+      auto w = 100.0;
+      auto x0 = -1000.0 + i * w;
+      auto z0 = -1000.0 + j * w;
+      auto y0 = 0.0;
+      auto x1 = x0 + w;
+      auto y1 = random_double(1, 101);
+      auto z1 = z0 + w;
+
+      boxes1.add(box(glm::dvec3(x0, y0, z0), glm::dvec3(x1, y1, z1), ground));
+    }
+  }
+
+  HitPool world;
+
+  world.add(std::make_shared<BVHNode>(boxes1));
+
+  auto light = std::make_shared<DiffuseLight>(glm::vec3(7, 7, 7));
+  world.add(std::make_shared<Quad>(glm::dvec3(123, 554, 147), glm::dvec3(300, 0, 0), glm::dvec3(0, 0, 265), light));
+
+  auto center1 = glm::dvec3(400, 400, 200);
+  auto center2 = center1 + glm::dvec3(30, 0, 0);
+  auto sphere_material = std::make_shared<Lambertian>(glm::vec3(0.7, 0.3, 0.1));
+  world.add(std::make_shared<Sphere>(center1, center2, 50, sphere_material));
+
+  world.add(std::make_shared<Sphere>(glm::dvec3(260, 150, 45), 50, std::make_shared<Dielectric>(1.5)));
+  world.add(std::make_shared<Sphere>(
+    glm::dvec3(0, 150, 145), 50, std::make_shared<Metal>(glm::vec3(0.8, 0.8, 0.9), 1.0)
+  ));
+
+  auto boundary = std::make_shared<Sphere>(glm::dvec3(360, 150, 145), 70, std::make_shared<Dielectric>(1.5));
+  world.add(boundary);
+  world.add(std::make_shared<ConstantMedium>(boundary, 0.2, glm::vec3(0.2, 0.4, 0.9)));
+  boundary = std::make_shared<Sphere>(glm::dvec3(0, 0, 0), 5000, std::make_shared<Dielectric>(1.5));
+  world.add(std::make_shared<ConstantMedium>(boundary, .0001, glm::vec3(1, 1, 1)));
+
+  auto emat = std::make_shared<Lambertian>(std::make_shared<ImageTexture>("earthmap.jpg"));
+  world.add(std::make_shared<Sphere>(glm::dvec3(400, 200, 400), 100, emat));
+  auto pertext = std::make_shared<NoiseTexture>(0.2);
+  world.add(std::make_shared<Sphere>(glm::dvec3(220, 280, 300), 80, std::make_shared<Lambertian>(pertext)));
+
+  HitPool boxes2;
+  auto white = std::make_shared<Lambertian>(glm::vec3(.73, .73, .73));
+  int ns = 1000;
+  for (int j = 0; j < ns; j++) {
+    boxes2.add(std::make_shared<Sphere>(random(0, 165), 10, white));
+  }
+
+  world.add(std::make_shared<Translate>(
+    std::make_shared<RotateYAxis>(
+      std::make_shared<BVHNode>(boxes2), 15),
+    glm::dvec3(-100, 270, 395)
+  )
+  );
+
+  Camera cam;
+
+  cam.aspect_ratio = 1.0;
+  cam.image_width = image_width;
+  cam.samples_per_pixel = samples_per_pixel;
+  cam.max_depth = max_depth;
+  cam.background = glm::vec3(0, 0, 0);
+
+  cam.vertical_fov = 40;
+  cam.look_from = glm::dvec3(478, 278, -600);
+  cam.look_at = glm::dvec3(278, 278, 0);
+  cam.view_up = glm::dvec3(0, 1, 0);
+
+  cam.defocus_angle = 0;
+
+  cam.render(world);
+}
+
+void boosted_scene(int image_width, int samples_per_pixel, int max_depth) {
+  HitPool boxes1;
+  std::shared_ptr<Lambertian> ground = std::make_shared<Lambertian>(glm::vec3(0.48, 0.83, 0.53));
+
+  int boxes_per_side = 20;
+  for (int i = 0; i < boxes_per_side; i++) {
+    for (int j = 0; j < boxes_per_side; j++) {
+      auto w = 100.0;
+      auto x0 = -1000.0 + i * w;
+      auto z0 = -1000.0 + j * w;
+      auto y0 = 0.0;
+      auto x1 = x0 + w;
+      auto y1 = random_double(1, 101);
+      auto z1 = z0 + w;
+
+      boxes1.add(box(glm::dvec3(x0, y0, z0), glm::dvec3(x1, y1, z1), ground));
+    }
+  }
+
+  HitPool world;
+  // Offset cubes that make up the ground
+  world.add(std::make_shared<BVHNode>(boxes1));
+
+  auto light = std::make_shared<DiffuseLight>(glm::vec3(7, 7, 7));
+  world.add(std::make_shared<Quad>(glm::dvec3(123, 554, 147), glm::dvec3(300, 0, 0), glm::dvec3(0, 0, 265), light));
+
+  // Bronce sphere with a Dynamic (moving) center, gives the impression of blurred motion.
+  glm::dvec3 center1 = glm::dvec3(400, 400, 200);
+  glm::dvec3 center2 = center1 + glm::dvec3(30, 0, 0);
+  std::shared_ptr<Lambertian> bronce_material = std::make_shared<Lambertian>(glm::vec3(0.7, 0.3, 0.1)); // Create a Lambertian material with an orange / bronce color
+  world.add(std::make_shared<Sphere>(center1, center2, 50, bronce_material));
+  
+  // Glass sphere center and front
+  world.add(std::make_shared<Sphere>(glm::dvec3(260, 150, 45), 50, std::make_shared<Dielectric>(1.5)));
+   
+  // Metallic sphere on the right of the scene with a bit of fuzziness
+  std::shared_ptr<Metal> metal_material = std::make_shared<Metal>(glm::vec3(0.8, 0.8, 0.43), 1.0);
+  world.add(std::make_shared<Sphere>(glm::dvec3(0, 150, 145), 50, metal_material));
+  
+  // This is a glass sphere just in fron of the earth textured sphere that contains a very saturated blue medium inside (blue smoke)
+  std::shared_ptr<Dielectric> glass_material = std::make_shared<Dielectric>(1.5);
+  std::shared_ptr<Sphere> boundary = std::make_shared<Sphere>(glm::dvec3(360, 150, 145), 70, glass_material);
+  world.add(boundary);
+  
+  world.add(std::make_shared<ConstantMedium>(boundary, 0.2, glm::vec3(0.2, 0.4, 0.9)));
+  
+  // All the scene is enclosed in some sort of foggy or smoky medium (represented as a sphere with a large radius)
+  //boundary = std::make_shared<Sphere>(glm::dvec3(0, 0, 0), 5000, std::make_shared<Dielectric>(1.5));
+  //world.add(std::make_shared<ConstantMedium>(boundary, .0001, glm::vec3(1, 1, 1))); //This should be the white foggy medium
+  
+  // Textured sphere
+  std::shared_ptr<Lambertian> earth_material = std::make_shared<Lambertian>(std::make_shared<ImageTexture>("earthmap.jpg"));
+  world.add(std::make_shared<Sphere>(glm::dvec3(400, 200, 400), 100, earth_material));
+  
+  // Perlin noise sphere in the center of the scene
+  std::shared_ptr<NoiseTexture> pertext = std::make_shared<NoiseTexture>(0.2);
+  world.add(std::make_shared<Sphere>(glm::dvec3(220, 280, 300), 80, std::make_shared<Lambertian>(pertext)));
+
+  // Polystyrene looking cloud, made ou of many small spheres
+  HitPool boxes2;
+  std::shared_ptr<Lambertian> white = std::make_shared<Lambertian>(glm::vec3(.73, .73, .73));
+  int ns = 1000;
+  for (int j = 0; j < ns; j++) {
+    boxes2.add(std::make_shared<Sphere>(random(0, 165), 10, white));
+  }
+  // Should be the polystyrene volume because the cube is rotated
+  world.add(std::make_shared<Translate>(std::make_shared<RotateYAxis>(std::make_shared<BVHNode>(boxes2), 15), glm::dvec3(-100, 270, 395)));
+
+  // Rotated pyramid with bronce material
+  HitPool pyram;
+  pyram.add(pyramid(glm::dvec3(0, 0, 0), glm::dvec3(60, 0, 0), glm::dvec3(0, 0, -60), 80, metal_material));
+  world.add(std::make_shared<Translate>(std::make_shared<RotateYAxis>(std::make_shared<BVHNode>(pyram), 15), glm::dvec3(-150, 220, 445)));
+
+  // Pyramid base parameters
+  glm::dvec3 base_origin = glm::dvec3(270, 354, 300);
+  glm::dvec3 u = glm::dvec3(60, 0, 0);
+  glm::dvec3 v = glm::dvec3(0, 0, -60);
+  double height = 100.0;
+
+  // Add the glass pyramid body
+  world.add(pyramid(base_origin, u, v, height, glass_material));
+
+  // Compute apex position
+  //glm::dvec3 apex = base_origin + 0.5 * u + 0.5 * v + glm::dvec3(0, height, 0);
+
+  // Add a small hemisphere (modeled as a full sphere) at the tip
+  //double tip_radius = 2.5;
+  //world.add(std::make_shared<Sphere>(apex - glm::dvec3(0, tip_radius, 0), tip_radius, glass_material));
+
+  
+  // White cylinder
+  std::shared_ptr<Metal> polished_metal = std::make_shared<Metal>(glm::vec3(0.8, 0.8, 0.9), 0.01);
+  world.add(cylindroid(glm::dvec3(120, 50, 80), glm::dvec3(40, 0, 0), glm::dvec3(0, 0, -40), 100, 32, polished_metal));
+
+
+  Camera cam;
+
+  cam.aspect_ratio = 1.0;
+  cam.image_width = image_width;
+  cam.samples_per_pixel = samples_per_pixel;
+  cam.max_depth = max_depth;
+  cam.background = glm::vec3(0, 0, 0);
+
+  cam.vertical_fov = 40;
+  cam.look_from = glm::dvec3(478, 278, -600);
+  cam.look_at = glm::dvec3(278, 278, 0);
+  cam.view_up = glm::dvec3(0, 1, 0);
+
+  cam.defocus_angle = 0;
+
+  cam.render(world);
+}
+
+void glass_pyr_test() {
+
+  HitPool world;
+
+  // Materials
+  auto red = std::make_shared<Lambertian>(glm::vec3(.65, 0.05, 0.05));
+  auto white = std::make_shared<Lambertian>(glm::vec3(0.73, 0.73, 0.73));
+  auto green = std::make_shared<Lambertian>(glm::vec3(0.12, 0.45, 0.15));
+  auto light = std::make_shared<DiffuseLight>(glm::vec3(40.f));
+
+  // Quads
+  world.add(std::make_shared<Quad>(glm::dvec3(-250, 0, 0), glm::dvec3(0, 500, 0), glm::dvec3(0, 0, -500), green)); // left
+  world.add(std::make_shared<Quad>(glm::dvec3(250, 0, 0), glm::dvec3(0, 500, 0), glm::dvec3(0, 0, -500), red)); // right
+  
+  world.add(std::make_shared<Quad>(glm::dvec3(-250, 0, 0), glm::dvec3(500, 0, 0), glm::dvec3(0, 0, -500), white)); // floor
+  world.add(std::make_shared<Quad>(glm::dvec3(-250, 500, 0), glm::dvec3(500, 0, 0), glm::dvec3(0, 0, -500), white)); // ceiling
+  auto dark = std::make_shared<Lambertian>(glm::vec3(0.1, 0.1, 0.1));
+  world.add(std::make_shared<Quad>(glm::dvec3(-250, 0, -500), glm::dvec3(500, 0, 0), glm::dvec3(0, 500, 0), dark)); // back
+
+  world.add(std::make_shared<Quad>(
+    glm::dvec3(-50, 499, -300),
+    glm::dvec3(100, 0, 0),
+    glm::dvec3(0, 0, 100),
+    light)); // light object
+
+  world.add(std::make_shared<Sphere>(glm::dvec3(50, 100, -250), 50, white));
+  
+  // very sneaky sneaky cheeky way to make a glass pyramid by adding a (hemi)sphere at the top, avoiding numerical issues with the pyramid planes
+  auto glass = std::make_shared<Dielectric>(1.5);
+
+  // Pyramid base parameters
+  glm::dvec3 base_origin = glm::dvec3(-50, 10, -100);
+  glm::dvec3 u = glm::dvec3(100, 0, 0);
+  glm::dvec3 v = glm::dvec3(0, 0, -100);
+  double height = 200.0;
+
+  // Add the glass pyramid body
+  world.add(pyramid(base_origin, u, v, height, glass));
+
+  // Compute apex position
+  glm::dvec3 apex = base_origin + 0.5 * u + 0.5 * v + glm::dvec3(0, height, 0);
+
+  // Add a small hemisphere (modeled as a full sphere) at the tip
+  double tip_radius = 2.5;
+  world.add(std::make_shared<Sphere>(apex - glm::dvec3(0, tip_radius, 0), tip_radius, glass));
+
+
+  Camera cam;
+
+  cam.aspect_ratio = 16.0 / 9.0;
+  cam.image_width = 600;
+  cam.samples_per_pixel = 1000;
+  cam.max_depth = 50;
+  cam.background = glm::vec3(0.0, 0.0, 0.0); // Black background
+
+  cam.vertical_fov = 40;
+  cam.look_from = glm::dvec3(0, 278, 600);
+  cam.look_at = glm::dvec3(0, 278, 0);
   cam.view_up = glm::dvec3(0, 1, 0);
 
   cam.defocus_angle = 0;

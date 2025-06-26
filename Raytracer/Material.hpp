@@ -75,7 +75,7 @@ class Dielectric : public Material {
         } else {
             direction = refract(unit_direction, rec.normal, etai_over_etat);
         }
-        scattered = Ray(rec.p, refracted, in.time());
+        scattered = Ray(rec.p, direction, in.time());
         return true;
     }
   private:
@@ -99,4 +99,20 @@ class DiffuseLight : public Material {
 
   private:
     std::shared_ptr<ITexture> texture; // Texture for the emitted light color
+};
+
+class Isotropic : public Material {
+public:
+  Isotropic(const glm::vec3& albedo) : tex(std::make_shared<SolidColorTexture>(albedo)) {}
+  Isotropic(std::shared_ptr<ITexture> tex) : tex(tex) {}
+
+  bool scatter(const Ray& r_in, const HitRecord& rec, glm::vec3& attenuation, Ray& scattered)
+    const override {
+    scattered = Ray(rec.p, random_unit_vector(), r_in.time());
+    attenuation = tex->color_value(rec.u, rec.v, rec.p);
+    return true;
+  }
+
+private:
+  std::shared_ptr<ITexture> tex;
 };

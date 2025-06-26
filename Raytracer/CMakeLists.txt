@@ -11,8 +11,12 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(glm)
 
 # Add source to this project's executable.
-add_executable (Raytracer "main.cpp" "Sphere.cpp" "HitPool.cpp" "Camera.cpp" "Interval.cpp" "AABB.cpp" "BVH.cpp" "TextureWrapper.cpp"  "ImageLoader.cpp" "Perlin.cpp" "Quad.cpp" "Hittable.cpp")
+add_executable (Raytracer "main.cpp" "Sphere.cpp" "HitPool.cpp" "Camera.cpp" "Interval.cpp" "AABB.cpp" "BVH.cpp" "TextureWrapper.cpp"  "ImageLoader.cpp" "Perlin.cpp" "Quad.cpp" "Hittable.cpp" "ConstantMedium.cpp")
 target_link_libraries(Raytracer PRIVATE glm)
+
+# Enable OpenMP
+find_package(OpenMP REQUIRED)
+target_link_libraries(Raytracer PRIVATE OpenMP::OpenMP_CXX)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET Raytracer PROPERTY CXX_STANDARD 20)

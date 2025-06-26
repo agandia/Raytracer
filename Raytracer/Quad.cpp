@@ -45,6 +45,10 @@ bool Quad::hit(const Ray& ray, Interval ray_t, HitRecord& rec) const
   rec.material = material;
   rec.set_face_normal(ray, normal);
 
+  if (glm::dot(rec.normal, ray.direction()) > 0)
+    std::cerr << "WARNING: Backface normal detected\n";
+
+
   return true;
 }
 
