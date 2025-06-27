@@ -8,6 +8,7 @@ Quad::Quad(const glm::dvec3& Q, const glm::dvec3& u, const glm::dvec3& v, std::s
   normal = glm::normalize(n);
   D = glm::dot(normal, Q);
   w = n / dot(n, n);
+  area = glm::length(n);
   set_bounding_box();
 }
 
@@ -65,6 +66,22 @@ bool Quad::is_interior(double a, double b, HitRecord& rec) const
   rec.u = a;
   rec.v = b;
   return true;
+}
+
+double Quad::pdf_value(const glm::dvec3& origin, const glm::dvec3& direction) const {
+  HitRecord rec;
+  if (!this->hit(Ray(origin, direction), Interval(0, infinity), rec))
+    return 0;
+
+  double distance_squared = rec.t * rec.t * glm::length2(direction);
+  double cosine = glm::abs(glm::dot(direction, rec.normal) / glm::length(direction));
+
+  return distance_squared / (cosine * area);
+}
+
+glm::dvec3 Quad::random(const glm::dvec3& origin) const {
+  glm::dvec3 random_point = Q + (u * random_double()) + (v * random_double());
+  return random_point - origin;
 }
 
 std::shared_ptr<HitPool> box(const glm::dvec3& corner_a, const glm::dvec3& corner_b, std::shared_ptr<Material> m)

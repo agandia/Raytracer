@@ -68,6 +68,18 @@ inline glm::dvec3 random_on_hemisphere(const glm::dvec3& normal) {
   }
 }
 
+inline glm::dvec3  random_cosine_direction() {
+  double r1 = random_double();
+  double r2 = random_double();
+
+  double phi = 2 * pi * r1;
+  double x = std::cos(phi) * std::sqrt(r2);
+  double y = std::sin(phi) * std::sqrt(r2);
+  double z = std::sqrt(1 - r2);
+
+  return glm::dvec3(x, y, z);
+}
+
 inline glm::dvec3 reflect(const glm::dvec3& v, const glm::dvec3& n) {
   // Reflects vector v around normal n.
   return v - 2 * glm::dot(v, n) * n;

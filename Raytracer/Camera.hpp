@@ -23,11 +23,13 @@ public:
   glm::dvec3 look_at = glm::dvec3(0.0);   // Point the camera is looking at
   glm::dvec3 view_up = glm::dvec3(0.0);   // Up vector for the camera
 
-  void render(const Hittable& world);
+  void render(const Hittable& world, const Hittable& lights);
 
 private:
   int         image_height;   // Rendered image height
-  float       pixel_samples_scale; // Color scale factor for a sum of pixel samples  
+  double       pixel_samples_scale; // Color scale factor for a sum of pixel samples  
+  int    sqrt_spp;             // Square root of number of samples per pixel
+  double recip_sqrt_spp;       // 1 / sqrt_spp
   glm::dvec3  center;         // Camera center
   glm::dvec3  pixel00_loc;    // Location of pixel 0, 0
   glm::dvec3  pixel_delta_u;  // Offset to pixel to the right
@@ -38,9 +40,10 @@ private:
 
   void initialize();
 
-  Ray get_ray(int x, int y) const;
+  Ray get_ray(int i, int j, int s_i, int s_j) const;
   glm::dvec3 sample_square() const;
-  glm::vec3 ray_color(const Ray& ray, int depth, const Hittable& world) const;
+  glm::dvec3 sample_square_stratified(int i, int j) const;
+  glm::vec3 ray_color(const Ray& ray, int depth, const Hittable& world, const Hittable& lights) const;
   glm::dvec3 defocus_disk_sample() const;
 
 };

@@ -33,6 +33,14 @@ class Hittable {
     virtual ~Hittable() = default;
 
     virtual AABB bounding_box() const = 0; ///< Get the bounding box of the object
+
+    virtual double pdf_value(const glm::dvec3& origin, const glm::dvec3& direction) const {
+      return 0.0;
+    }
+
+    virtual glm::dvec3  random(const glm::dvec3& origin) const {
+      return glm::dvec3(1, 0, 0);
+    }
 };
 
 class Translate : public Hittable {

@@ -4,6 +4,7 @@
 #include "TextureWrapper.hpp"
 #include "Ray.hpp"
 #include "Utilities.hpp"
+#include "OrthonormalBasis.hpp"
 #include <glm/glm.hpp>
 #include <memory>
 
@@ -11,8 +12,12 @@ class Material {
 public:
     virtual ~Material() = default;
     // Returns the attenuation and scattered ray if the ray is scattered, otherwise returns false
-    virtual bool scatter(const Ray& in, const HitRecord& rec, glm::vec3& attenuation, Ray& scattered) const { return false; }
-    virtual glm::vec3 emitted(double u, double v, const glm::dvec3& point) const { return glm::vec3(0.0f); }
+    virtual bool scatter(const Ray& in, const HitRecord& rec, glm::vec3& attenuation, Ray& scattered, double& pdf) const { return false; }
+    virtual glm::vec3 emitted(const Ray& r_in, const HitRecord& rec, double u, double v, const glm::dvec3& point) const { return glm::vec3(0.f); }
+
+    virtual double scattering_pdf(const Ray& r_in, const HitRecord& rec, const Ray& scattered) const {
+        return 0.0; // Default implementation returns 0, meaning no PDF is defined
+    }
     
 };
 
@@ -21,16 +26,21 @@ public:
   Lambertian(const glm::vec3& albedo) : texture(std::make_shared<SolidColorTexture>(albedo)) {}
   Lambertian(std::shared_ptr<ITexture>texture) : texture(texture) {}
 
-  bool scatter(const Ray& in, const HitRecord& rec, glm::vec3& attenuation, Ray& scattered) const override {
-    glm::dvec3 scatter_direction = rec.normal + random_unit_vector();
+  bool scatter(const Ray& in, const HitRecord& rec, glm::vec3& attenuation, Ray& scattered, double& pdf) const override {
+    OrthoNormalBasis basis(rec.normal);
+    glm::dvec3 scatter_direction = basis.transform(random_cosine_direction());
 
-    // Catch degenerate scatter direction
-    if (near_zero(scatter_direction)) {
-      scatter_direction = rec.normal; // Use the normal as a fallback direction
-    }
-    scattered = Ray(rec.p, scatter_direction, in.time());
+    scattered = Ray(rec.p, glm::normalize(scatter_direction), in.time());
     attenuation = texture->color_value(rec.u, rec.v, rec.p);
+    pdf = glm::dot(basis.w(), scattered.direction()) / pi;
     return true;
+  }
+
+  double scattering_pdf(const Ray& r_in, const HitRecord& rec, const Ray& scattered) const override {
+    //double cos_theta = glm::dot(glm::normalize(rec.normal), glm::normalize(scattered.direction()));
+    //return (cos_theta  < 0) ? 0 : cos_theta / pi; // PDF for Lambertian scattering
+    return 1 / (2 * pi);
+
   }
 
 private:
@@ -41,7 +51,7 @@ class Metal : public Material {
   public:
     Metal(const glm::vec3& albedo, double fuzz) : albedo(albedo), fuzz(fuzz < 1.0 ? fuzz : 1.0) {}
     
-    bool scatter(const Ray& in, const HitRecord& rec, glm::vec3& attenuation, Ray& scattered) const override {
+    bool scatter(const Ray& in, const HitRecord& rec, glm::vec3& attenuation, Ray& scattered, double& pdf) const override {
         glm::dvec3 reflected = reflect(in.direction(), rec.normal);
         reflected = glm::normalize(reflected) + (fuzz * random_unit_vector()); // Normalize the reflected direction
         scattered = Ray(rec.p, reflected, in.time());
@@ -57,7 +67,7 @@ class Dielectric : public Material {
   public:
     Dielectric(double ref_idx) : ref_idx(ref_idx) {}
 
-    bool scatter(const Ray& in, const HitRecord& rec, glm::vec3& attenuation, Ray& scattered) const override {
+    bool scatter(const Ray& in, const HitRecord& rec, glm::vec3& attenuation, Ray& scattered, double& pdf) const override {
         attenuation = glm::vec3(1.0, 1.0, 1.0); // Light is not absorbed
         double etai_over_etat = rec.front_face ? (1.0 / ref_idx) : ref_idx; // Determine the index of refraction
 
@@ -93,8 +103,9 @@ class DiffuseLight : public Material {
   public:
     DiffuseLight(std::shared_ptr<ITexture> texture) : texture(texture) {}
     DiffuseLight(const glm::vec3& color) : texture(std::make_shared<SolidColorTexture>(color)) {}
-    glm::vec3 emitted(double u, double v, const glm::dvec3& point) const override{
-        return texture->color_value(u, v, point);
+    glm::vec3 emitted(const Ray& r_in, const HitRecord& rec, double u, double v, const glm::dvec3& point) const override{
+      if (!rec.front_face) return glm::vec3(0.f); // No emission if not front-facing
+      return texture->color_value(u, v, point);
     }
 
   private:
@@ -106,11 +117,16 @@ public:
   Isotropic(const glm::vec3& albedo) : tex(std::make_shared<SolidColorTexture>(albedo)) {}
   Isotropic(std::shared_ptr<ITexture> tex) : tex(tex) {}
 
-  bool scatter(const Ray& r_in, const HitRecord& rec, glm::vec3& attenuation, Ray& scattered)
+  bool scatter(const Ray& r_in, const HitRecord& rec, glm::vec3& attenuation, Ray& scattered, double& pdf)
     const override {
     scattered = Ray(rec.p, random_unit_vector(), r_in.time());
     attenuation = tex->color_value(rec.u, rec.v, rec.p);
+    pdf = 1.0 / (4 * pi); // Uniform isotropic scattering
     return true;
+  }
+
+  double scattering_pdf(const Ray& r_in, const HitRecord& rec, const Ray& scattered) const override {
+    return 1.0 / (4 * pi); // Uniform isotropic scattering PDF
   }
 
 private:

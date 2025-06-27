@@ -3,52 +3,28 @@
 #include <chrono>
 #include <omp.h>
 
-
 #include "Camera.hpp"
 #include "Utilities.hpp"
 #include "Material.hpp"
+#include "PDF.hpp"
 
 
-void Camera::render(const Hittable& world) {
+void Camera::render(const Hittable& world, const Hittable& lights) {
   initialize();
 
-  const int tile_size = 32;
-  const int num_passes = 10;
-  const int spp_per_pass = samples_per_pixel / num_passes;
-
-  std::vector<glm::vec3> framebuffer(image_width * image_height, glm::vec3(0.0f));
-
   auto start = std::chrono::high_resolution_clock::now();
-
-  for (int pass = 0; pass < num_passes; ++pass) {
-    std::clog << "\nStarting pass " << (pass + 1) << "/" << num_passes << std::endl;
-
-#pragma omp parallel for collapse(2) schedule(dynamic)
-    for (int tile_y = 0; tile_y < image_height; tile_y += tile_size) {
-      for (int tile_x = 0; tile_x < image_width; tile_x += tile_size) {
-        for (int j = tile_y; j < std::min(tile_y + tile_size, image_height); ++j) {
-          for (int i = tile_x; i < std::min(tile_x + tile_size, image_width); ++i) {
-            glm::vec3 pixel_color(0.0f);
-            for (int s = 0; s < spp_per_pass; ++s) {
-              Ray ray = get_ray(i, j);
-              pixel_color += ray_color(ray, max_depth, world);
-            }
-            framebuffer[j * image_width + i] += pixel_color;
-          }
+  std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+  for (int j = 0; j < image_height; j++) {
+    std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
+    for (int i = 0; i < image_width; i++) {
+      glm::vec3 pixel_color(0, 0, 0);
+      for (int s_j = 0; s_j < sqrt_spp; s_j++) {
+        for (int s_i = 0; s_i < sqrt_spp; s_i++) {
+          Ray r = get_ray(i, j, s_i, s_j);
+          pixel_color += ray_color(r, max_depth, world, lights);
         }
       }
-    }
-
-    std::clog << "\rFinished pass " << (pass + 1) << "/" << num_passes << std::flush;
-  }
-
-  // Final write to image.ppm
-  std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-
-  for (int j = 0; j < image_height ; ++j) {
-    for (int i = 0; i < image_width; ++i) {
-      glm::vec3 color = framebuffer[j * image_width + i] / float(samples_per_pixel);
-      write_color(std::cout, color);
+      write_color(std::cout, (float)pixel_samples_scale * pixel_color);
     }
   }
 
@@ -62,7 +38,9 @@ void Camera::initialize() {
   image_height = int(image_width / aspect_ratio);
   image_height = (image_height < 1) ? 1 : image_height;
 
-  pixel_samples_scale = 1.0f / samples_per_pixel;
+  sqrt_spp = int(std::sqrt(samples_per_pixel));
+  pixel_samples_scale = 1.0 / (sqrt_spp * sqrt_spp);
+  recip_sqrt_spp = 1.0 / sqrt_spp;
 
   center = look_from; // Set the camera position at the origin
 
@@ -96,11 +74,11 @@ void Camera::initialize() {
   defocus_disk_v = defocus_radius * v; // Vertical defocus vector
 }
 
-Ray Camera::get_ray(int i, int j) const {
+Ray Camera::get_ray(int i, int j, int s_i, int s_j) const {
   // Construct a camera ray originating from the defocus disk and directed at a randomly
-  // sampled point around the pixel location i, j.
+  // sampled point around the pixel location i, j for stratified sample square s_i, s_j.
 
-  glm::dvec3 offset = sample_square();
+  glm::dvec3 offset = sample_square_stratified(s_i, s_j);
   glm::dvec3 pixel_sample = pixel00_loc
     + ((i + offset.x) * pixel_delta_u)
     + ((j + offset.y) * pixel_delta_v);
@@ -118,7 +96,18 @@ glm::dvec3 Camera::sample_square() const {
   return glm::dvec3(random_double() - 0.5, random_double() - 0.5, 0.0);
 }
 
-glm::vec3 Camera::ray_color(const Ray& ray, int depth, const Hittable& world) const {
+glm::dvec3 Camera::sample_square_stratified(int i, int j) const
+{
+  // Returns the vector to a random point in the square sub-pixel specified by grid
+  // indices s_i and s_j, for an idealized unit square pixel [-.5,-.5] to [+.5,+.5].
+
+  auto px = ((i + random_double()) * recip_sqrt_spp) - 0.5;
+  auto py = ((j + random_double()) * recip_sqrt_spp) - 0.5;
+
+  return glm::dvec3(px, py, 0);
+}
+
+glm::vec3 Camera::ray_color(const Ray& ray, int depth, const Hittable& world, const Hittable& lights) const {
   // If we've exceeded the ray bounce limit, no more light is gathered.
   if(depth <= 0) {
     return glm::vec3(0.0f); // Return black color
@@ -133,14 +122,23 @@ glm::vec3 Camera::ray_color(const Ray& ray, int depth, const Hittable& world) co
 
   Ray scattered_ray;
   glm::vec3 attenuation;
-  glm::vec3 emitted_color = hit_record.material->emitted(hit_record.u, hit_record.v, hit_record.p);
+  double pdf_value;
+  glm::vec3 emitted_color = hit_record.material->emitted(ray, hit_record, hit_record.u, hit_record.v, hit_record.p);
 
-  if(!hit_record.material->scatter(ray, hit_record, attenuation, scattered_ray)) {
+  if(!hit_record.material->scatter(ray, hit_record, attenuation, scattered_ray, pdf_value)) {
     // If the material scatters the ray, recursively calculate the color
     return emitted_color;
   }
+  
+  HittablePDF light_pdf(lights, hit_record.p);
+  scattered_ray = Ray(hit_record.p, light_pdf.generate(), ray.time());
+  pdf_value = light_pdf.value(scattered_ray.direction());
 
-  glm::vec3 scattered_color = attenuation * ray_color(scattered_ray, depth - 1, world);
+  double scattering_pdf = hit_record.material->scattering_pdf(ray, hit_record, scattered_ray);
+  
+  glm::vec3 sample_color = ray_color(scattered_ray, depth - 1, world, lights);
+  glm::vec3 scattered_color = (attenuation * (float)scattering_pdf * sample_color) / (float)pdf_value;
+
   return emitted_color + scattered_color; // Combine emitted color and scattered color
   
   // Old code to have a blueish gradient background
