@@ -658,3 +658,79 @@ void glass_pyr_test() {
 
   cam.render(world, lights);
 }
+
+void prob_dens_func_test() {
+
+  HitPool world;
+
+  // Materials
+  auto red = std::make_shared<Lambertian>(glm::vec3(.65, 0.05, 0.05));
+  auto white = std::make_shared<Lambertian>(glm::vec3(0.73, 0.73, 0.73));
+  auto green = std::make_shared<Lambertian>(glm::vec3(0.12, 0.45, 0.15));
+  auto light = std::make_shared<DiffuseLight>(glm::vec3(15.f, 15.f, 15.f));
+
+  // Quads
+  //world.add(std::make_shared<Triangle>(glm::dvec3(343, 0, 332), glm::dvec3(0, 0, 130), glm::dvec3(0, 130, 0), red));
+  world.add(std::make_shared<Quad>(glm::dvec3(555, 0, 0), glm::dvec3(0, 555, 0), glm::dvec3(0, 0, 555), green));
+  world.add(std::make_shared<Quad>(glm::dvec3(0, 0, 0), glm::dvec3(0, 555, 0), glm::dvec3(0, 0, 555), red));
+  world.add(std::make_shared<Quad>(glm::dvec3(0, 0, 0), glm::dvec3(555, 0, 0), glm::dvec3(0, 0, 555), white));
+  world.add(std::make_shared<Quad>(glm::dvec3(555, 555, 555), glm::dvec3(-555, 0, 0), glm::dvec3(0, 0, -555), white));
+  world.add(std::make_shared<Quad>(glm::dvec3(0, 0, 555), glm::dvec3(555, 0, 0), glm::dvec3(0, 555, 0), white));
+
+  //Light
+  world.add(std::make_shared<Quad>(glm::dvec3(343, 554, 332), glm::dvec3(-130, 0, 0), glm::dvec3(0, 0, -105), light));
+
+  // Light Sources
+  std::shared_ptr<Material> empty_material = std::shared_ptr<Material>();
+  HitPool lights;
+  lights.add(std::make_shared<Quad>(glm::dvec3(343, 554, 332), glm::dvec3(-130, 0, 0), glm::dvec3(0, 0, -105), empty_material));
+  //lights.add(std::make_shared<Sphere>(glm::dvec3(190, 90, 190), 90, empty_material));
+  //std::shared_ptr<Material> aluminium = std::make_shared<Metal>(glm::vec3(0.8, 0.85, 0.88), 0.01);
+  //std::shared_ptr<Hittable> box1 = std::make_shared<Box>(glm::dvec3(0, 0, 0), glm::dvec3(165, 330, 165), aluminium);
+  //box1 = make_shared<RotateYAxis>(box1, 15);
+  //box1 = make_shared<Translate>(box1, glm::vec3(265, 0, 295));
+  //world.add(box1);
+
+  //std::shared_ptr<Hittable> box2 = box(glm::dvec3(0, 0, 0), glm::dvec3(165, 165, 165), white);
+  //box2 = make_shared<RotateYAxis>(box2, -18);
+  //box2 = make_shared<Translate>(box2, glm::vec3(130, 0, 65));
+  //world.add(box2);
+
+  // Glass Sphere
+  //std::shared_ptr<Dielectric> glass = std::make_shared<Dielectric>(1.5);
+  //world.add(std::make_shared<Sphere>(glm::dvec3(190, 90, 190), 90, glass));
+
+  //world.add(std::make_shared<Triangle>(glm::dvec3(390, 0, 295), glm::dvec3(-260, 0 , 0), glm::dvec3(-130, 295, 0), light));
+  auto aluminium = std::make_shared<Metal>(glm::vec3(0.8, 0.85, 0.88), 0.01);
+  auto shape_under_test = std::make_shared<Triangle>(
+    glm::dvec3(390, 0, 295),
+    glm::dvec3(-260, 0, 0),
+    glm::dvec3(-130, 295, 0),
+    aluminium // not a light!
+  );
+  world.add(shape_under_test);
+
+  lights.add(std::make_shared<Triangle>(
+    glm::dvec3(390, 0, 295),
+    glm::dvec3(-260, 0, 0),
+    glm::dvec3(-130, 295, 0),
+    empty_material
+  ));
+
+  Camera cam;
+
+  cam.aspect_ratio = 1;
+  cam.image_width = 600;
+  cam.samples_per_pixel = 1000;
+  cam.max_depth = 50;
+  cam.background = glm::vec3(0.0, 0.0, 0.0); // Black background
+
+  cam.vertical_fov = 40;
+  cam.look_from = glm::dvec3(278, 278, -800);
+  cam.look_at = glm::dvec3(278, 278, 0);
+  cam.view_up = glm::dvec3(0, 1, 0);
+
+  cam.defocus_angle = 0;
+
+  cam.render(world, lights);
+}
