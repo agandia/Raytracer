@@ -4,8 +4,7 @@
 #include "Camera.hpp"
 #include "ConstantMedium.hpp"
 #include "HitPool.hpp"
-#include "Sphere.hpp"
-#include "Quad.hpp"
+#include "Shapes/Shapes.hpp"
 #include "Material.hpp"
 #include "TextureWrapper.hpp"
 #include <memory>
@@ -296,26 +295,32 @@ void cornell_box() {
   //Light
   world.add(std::make_shared<Quad>(glm::dvec3(343, 554, 332), glm::dvec3(-130, 0, 0), glm::dvec3(0, 0, -105), light));
 
-  std::shared_ptr<Hittable> box1 = box(glm::dvec3(0, 0, 0), glm::dvec3(165, 330, 165), white);
+  std::shared_ptr<Material> aluminium = std::make_shared<Metal>(glm::vec3(0.8, 0.85, 0.88), 0.01);
+  std::shared_ptr<Hittable> box1 = std::make_shared<Box>(glm::dvec3(0, 0, 0), glm::dvec3(165, 330, 165), aluminium);
   box1 = make_shared<RotateYAxis>(box1, 15);
   box1 = make_shared<Translate>(box1, glm::vec3(265, 0, 295));
   world.add(box1);
 
-  std::shared_ptr<Hittable> box2 = box(glm::dvec3(0, 0, 0), glm::dvec3(165, 165, 165), white);
-  box2 = make_shared<RotateYAxis>(box2, -18);
-  box2 = make_shared<Translate>(box2, glm::vec3(130, 0, 65));
-  world.add(box2);
+  //std::shared_ptr<Hittable> box2 = box(glm::dvec3(0, 0, 0), glm::dvec3(165, 165, 165), white);
+  //box2 = make_shared<RotateYAxis>(box2, -18);
+  //box2 = make_shared<Translate>(box2, glm::vec3(130, 0, 65));
+  //world.add(box2);
+
+  // Glass Sphere
+  std::shared_ptr<Dielectric> glass = std::make_shared<Dielectric>(1.5);
+  world.add(std::make_shared<Sphere>(glm::dvec3(190, 90, 190), 90, glass));
 
   // Light Sources
   std::shared_ptr<Material> empty_material = std::shared_ptr<Material>();
   HitPool lights;
   lights.add(std::make_shared<Quad>(glm::dvec3(343, 554, 332), glm::dvec3(-130, 0, 0), glm::dvec3(0, 0, -105), empty_material));
+  lights.add(std::make_shared<Sphere>(glm::dvec3(190,90,190), 90, empty_material));
 
   Camera cam;
 
   cam.aspect_ratio = 1;
   cam.image_width = 600;
-  cam.samples_per_pixel = 10;
+  cam.samples_per_pixel = 1000;
   cam.max_depth = 50;
   cam.background = glm::vec3(0.0, 0.0, 0.0); // Black background
 
@@ -346,12 +351,12 @@ void cornell_smoke() {
   world.add(std::make_shared<Quad>(glm::dvec3(555, 555, 555), glm::dvec3(-555, 0, 0), glm::dvec3(0, 0, -555), white));
   world.add(std::make_shared<Quad>(glm::dvec3(0, 0, 555), glm::dvec3(555, 0, 0), glm::dvec3(0, 555, 0), white));
 
-  std::shared_ptr<Hittable> box1 = box(glm::dvec3(0, 0, 0), glm::dvec3(165, 330, 165), white);
+  std::shared_ptr<Hittable> box1 = std::make_shared<Box>(glm::dvec3(0, 0, 0), glm::dvec3(165, 330, 165), white);
   box1 = make_shared<RotateYAxis>(box1, 15);
   box1 = make_shared<Translate>(box1, glm::vec3(265, 0, 295));
   world.add(box1);
 
-  std::shared_ptr<Hittable> box2 = box(glm::dvec3(0, 0, 0), glm::dvec3(165, 165, 165), white);
+  std::shared_ptr<Hittable> box2 = std::make_shared<Box>(glm::dvec3(0, 0, 0), glm::dvec3(165, 165, 165), white);
   box2 = make_shared<RotateYAxis>(box2, -18);
   box2 = make_shared<Translate>(box2, glm::vec3(130, 0, 65));
   world.add(box2);
@@ -397,7 +402,7 @@ void final_scene(int image_width, int samples_per_pixel, int max_depth) {
       auto y1 = random_double(1, 101);
       auto z1 = z0 + w;
 
-      boxes1.add(box(glm::dvec3(x0, y0, z0), glm::dvec3(x1, y1, z1), ground));
+      boxes1.add(std::make_shared<Box>(glm::dvec3(x0, y0, z0), glm::dvec3(x1, y1, z1), ground));
     }
   }
 
@@ -481,7 +486,7 @@ void boosted_scene(int image_width, int samples_per_pixel, int max_depth) {
       auto y1 = random_double(1, 101);
       auto z1 = z0 + w;
 
-      boxes1.add(box(glm::dvec3(x0, y0, z0), glm::dvec3(x1, y1, z1), ground));
+      boxes1.add(std::make_shared<Box>(glm::dvec3(x0, y0, z0), glm::dvec3(x1, y1, z1), ground));
     }
   }
 
@@ -541,7 +546,7 @@ void boosted_scene(int image_width, int samples_per_pixel, int max_depth) {
 
   // Rotated pyramid with bronce material
   HitPool pyram;
-  pyram.add(pyramid(glm::dvec3(0, 0, 0), glm::dvec3(60, 0, 0), glm::dvec3(0, 0, -60), 80, metal_material));
+  pyram.add(std::make_shared<Pyramid>(glm::dvec3(0, 0, 0), glm::dvec3(60, 0, 0), glm::dvec3(0, 0, -60), 80, metal_material));
   world.add(std::make_shared<Translate>(std::make_shared<RotateYAxis>(std::make_shared<BVHNode>(pyram), 15), glm::dvec3(-150, 220, 445)));
 
   // Pyramid base parameters
@@ -551,7 +556,7 @@ void boosted_scene(int image_width, int samples_per_pixel, int max_depth) {
   double height = 100.0;
 
   // Add the glass pyramid body
-  world.add(pyramid(base_origin, u, v, height, glass_material));
+  world.add(std::make_shared<Pyramid>(base_origin, u, v, height, glass_material));
 
   // Compute apex position
   //glm::dvec3 apex = base_origin + 0.5 * u + 0.5 * v + glm::dvec3(0, height, 0);
@@ -563,7 +568,7 @@ void boosted_scene(int image_width, int samples_per_pixel, int max_depth) {
   
   // White cylinder
   std::shared_ptr<Metal> polished_metal = std::make_shared<Metal>(glm::vec3(0.8, 0.8, 0.9), 0.01);
-  world.add(cylindroid(glm::dvec3(120, 50, 80), glm::dvec3(40, 0, 0), glm::dvec3(0, 0, -40), 100, 32, polished_metal));
+  world.add(std::make_shared<Cylindroid>(glm::dvec3(120, 50, 80), glm::dvec3(40, 0, 0), glm::dvec3(0, 0, -40), 100, 32, polished_metal));
 
 
   Camera cam;
@@ -626,7 +631,7 @@ void glass_pyr_test() {
   double height = 200.0;
 
   // Add the glass pyramid body
-  world.add(pyramid(base_origin, u, v, height, glass));
+  world.add(std::make_shared<Pyramid>(base_origin, u, v, height, glass));
 
   // Compute apex position
   glm::dvec3 apex = base_origin + 0.5 * u + 0.5 * v + glm::dvec3(0, height, 0);

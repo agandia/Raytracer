@@ -22,6 +22,10 @@ class HitPool: public Hittable {
 
     AABB bounding_box() const override { return bbox; }
 
+    double pdf_value(const glm::dvec3& origin, const glm::dvec3& direction) const override;
+
+    glm::dvec3 random(const glm::dvec3& origin) const override;
+
   private:
     AABB bbox;
 };

@@ -93,20 +93,37 @@ inline glm::dvec3 refract(const glm::dvec3& uv, const glm::dvec3& n, double etai
   return r_out_perp + r_out_parallel;
 }
 
-inline double linear_to_gamma(double value) {
+inline float linear_to_gamma(float value) {
   // Converts a linear color value to gamma space.
-  if(value > 0)
+  if(value > 0.f)
     return std::sqrt(value);
 
-  return 0.0;
+  return 0.f;
 }
 
-inline void write_color(std::ostream& out, const glm::vec3 color) {
-  // Translate the [0, 1] component values to the byte range [0, 255].
+inline void write_color(std::ostream& out, const glm::vec3 pixel_color) {
+  float r = pixel_color.x;
+  float g = pixel_color.y;
+  float b = pixel_color.z;
+
+  // Replace NaN components with zero.
+  if (r != r) r = 0.0;
+  if (g != g) g = 0.0;
+  if (b != b) b = 0.0;
+
+  // Apply a linear to gamma transform for gamma 2
+  r = linear_to_gamma(r);
+  g = linear_to_gamma(g);
+  b = linear_to_gamma(b);
+
+  // Translate the [0,1] component values to the byte range [0,255].
   static const Interval intensity(0.000, 0.999);
-  
-  out << static_cast<int>(256 * intensity.clamp(linear_to_gamma(color.r))) << ' '
-      << static_cast<int>(256 * intensity.clamp(linear_to_gamma(color.g))) << ' '
-      << static_cast<int>(256 * intensity.clamp(linear_to_gamma(color.b))) << '\n';
+  int rbyte = int(256 * intensity.clamp(r));
+  int gbyte = int(256 * intensity.clamp(g));
+  int bbyte = int(256 * intensity.clamp(b));
+
+  // Write out the pixel color components.
+  out << rbyte << ' ' << gbyte << ' ' << bbyte << '\n';
+
 }
 

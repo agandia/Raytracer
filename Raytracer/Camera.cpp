@@ -12,22 +12,35 @@
 void Camera::render(const Hittable& world, const Hittable& lights) {
   initialize();
 
+  std::vector<glm::vec3> framebuffer(image_width * image_height);
+
   auto start = std::chrono::high_resolution_clock::now();
-  std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-  for (int j = 0; j < image_height; j++) {
-    std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
-    for (int i = 0; i < image_width; i++) {
+
+#pragma omp parallel for schedule(dynamic, 1)
+  for (int j = 0; j < image_height; ++j) {
+    for (int i = 0; i < image_width; ++i) {
       glm::vec3 pixel_color(0, 0, 0);
-      for (int s_j = 0; s_j < sqrt_spp; s_j++) {
-        for (int s_i = 0; s_i < sqrt_spp; s_i++) {
+      for (int s_j = 0; s_j < sqrt_spp; ++s_j) {
+        for (int s_i = 0; s_i < sqrt_spp; ++s_i) {
           Ray r = get_ray(i, j, s_i, s_j);
           pixel_color += ray_color(r, max_depth, world, lights);
         }
       }
-      write_color(std::cout, (float)pixel_samples_scale * pixel_color);
+      framebuffer[j * image_width + i] = (float)pixel_samples_scale * pixel_color;
+    }
+
+#pragma omp critical
+    {
+      std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
     }
   }
 
+  std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+  for (int j = 0; j < image_height; ++j) {
+    for (int i = 0; i < image_width; ++i) {
+      write_color(std::cout, framebuffer[j * image_width + i]);
+    }
+  }
   auto end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed = end - start;
   std::clog << "\nDone in " << elapsed.count() << " seconds.\n";
@@ -120,31 +133,30 @@ glm::vec3 Camera::ray_color(const Ray& ray, int depth, const Hittable& world, co
     return background;
   }
 
-  Ray scattered_ray;
-  glm::vec3 attenuation;
-  double pdf_value;
+  ScatterRecord scatter_record;
   glm::vec3 emitted_color = hit_record.material->emitted(ray, hit_record, hit_record.u, hit_record.v, hit_record.p);
 
-  if(!hit_record.material->scatter(ray, hit_record, attenuation, scattered_ray, pdf_value)) {
+  if(!hit_record.material->scatter(ray, hit_record, scatter_record)) {
     // If the material scatters the ray, recursively calculate the color
     return emitted_color;
   }
-  
-  HittablePDF light_pdf(lights, hit_record.p);
-  scattered_ray = Ray(hit_record.p, light_pdf.generate(), ray.time());
-  pdf_value = light_pdf.value(scattered_ray.direction());
+
+  if (scatter_record.skip_pdf) {
+    return scatter_record.attenuation * ray_color(scatter_record.skip_pdf_ray, depth - 1, world, lights);
+  }
+
+  std::shared_ptr<HittablePDF> light_ptr = std::make_shared<HittablePDF>(lights, hit_record.p);
+  MixturePDF p(light_ptr, scatter_record.pdf_ptr);
+
+  Ray scattered_ray = Ray(hit_record.p, p.generate(), ray.time());
+  double pdf_value = p.value(scattered_ray.direction());
 
   double scattering_pdf = hit_record.material->scattering_pdf(ray, hit_record, scattered_ray);
   
   glm::vec3 sample_color = ray_color(scattered_ray, depth - 1, world, lights);
-  glm::vec3 scattered_color = (attenuation * (float)scattering_pdf * sample_color) / (float)pdf_value;
+  glm::vec3 scattered_color = (scatter_record.attenuation * (float)scattering_pdf * sample_color) / (float)pdf_value;
 
   return emitted_color + scattered_color; // Combine emitted color and scattered color
-  
-  // Old code to have a blueish gradient background
-  //glm::dvec3 unit_direction = glm::normalize(ray.direction());
-  //float t = 0.5f * ((float)unit_direction.y + 1.0f); // Map y component to [0, 1]
-  //return (1.0f - t) * glm::vec3(1.0f) + t * glm::vec3(0.5f, 0.7f, 1.0f); // Gradient from white to blue for the background
 }
 
 glm::dvec3 Camera::defocus_disk_sample() const
