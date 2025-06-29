@@ -66,12 +66,14 @@ public:
   RotateYAxis(std::shared_ptr<Hittable> object, double angle);
   bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const override;
   inline AABB bounding_box() const override { return bbox; }
-
+  double pdf_value(const glm::dvec3& origin, const glm::dvec3& direction) const override;
+  glm::dvec3 random(const glm::dvec3& origin) const override;
 private:
   std::shared_ptr<Hittable> hittable;
   double sin_theta;
   double cos_theta;
   AABB bbox;
 
-
+  glm::dvec3 rotate_y(const glm::dvec3& p) const;
+  glm::dvec3 inverse_rotate_y(const glm::dvec3& p) const;
 };

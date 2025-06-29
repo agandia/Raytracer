@@ -15,5 +15,6 @@ public:
 
 private:
   std::shared_ptr<HitPool> faces;
+  std::vector<double> surface_areas;
   AABB bbox;
 };

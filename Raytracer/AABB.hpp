@@ -18,6 +18,13 @@ public:
 
   int longest_axis() const;
 
+  inline double surface_area() const {
+    double dx = x.size();
+    double dy = y.size();
+    double dz = z.size();
+    return 2.0 * (dx * dy + dx * dz + dy * dz);
+  }
+
   static const AABB empty, universe;
 
   private:

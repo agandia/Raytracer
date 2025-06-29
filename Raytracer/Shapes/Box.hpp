@@ -1,4 +1,7 @@
 #pragma once
+
+#include <array>
+
 #include "../Hittable.hpp"
 #include "../HitPool.hpp"
 #include "Quad.hpp"
@@ -14,5 +17,6 @@ public:
 
 private:
   std::shared_ptr<HitPool> sides;
+  std::array<double, 6> face_weights;
   AABB bbox;
 };

@@ -17,7 +17,10 @@ public:
     return true;
   }
 
-  // Triangle.cpp
+  double surface_area() const {
+    return 0.5 * glm::length(glm::cross(u, v));
+  }
+
   virtual double pdf_value(const glm::dvec3& origin, const glm::dvec3& direction) const {
     Ray r(origin, direction);
     HitRecord rec;
@@ -25,8 +28,10 @@ public:
     if (!this->hit(r, Interval(0.001, infinity), rec))
       return 0;
 
-    double distance_squared = rec.t * rec.t * glm::length2(direction);
-    double cosine = glm::abs(glm::dot(direction, rec.normal) / glm::length(direction));
+    double distance_squared = rec.t * rec.t * glm::length2(r.direction());
+    double cosine = glm::abs(glm::dot(direction, rec.normal) / glm::length(r.direction()));
+    if (cosine < 1e-6)
+      return 0;
 
     // Triangle area = 0.5 * |u × v|, already stored in area from Quad constructor
     return distance_squared / (cosine * area);

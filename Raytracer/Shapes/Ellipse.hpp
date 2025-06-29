@@ -13,6 +13,10 @@ public:
     bbox = AABB(Q - u - v, Q + u + v);
   }
 
+  double surface_area() const {
+    return pi * glm::length(u) * glm::length(v);
+  }
+
   virtual bool is_interior(double a, double b, HitRecord& rec) const override {
     if ((a * a + b * b) > 1)
       return false;

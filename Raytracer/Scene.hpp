@@ -679,43 +679,77 @@ void prob_dens_func_test() {
 
   //Light
   world.add(std::make_shared<Quad>(glm::dvec3(343, 554, 332), glm::dvec3(-130, 0, 0), glm::dvec3(0, 0, -105), light));
-
-  // Light Sources
+    // Light Sources
   std::shared_ptr<Material> empty_material = std::shared_ptr<Material>();
   HitPool lights;
   lights.add(std::make_shared<Quad>(glm::dvec3(343, 554, 332), glm::dvec3(-130, 0, 0), glm::dvec3(0, 0, -105), empty_material));
-  //lights.add(std::make_shared<Sphere>(glm::dvec3(190, 90, 190), 90, empty_material));
-  //std::shared_ptr<Material> aluminium = std::make_shared<Metal>(glm::vec3(0.8, 0.85, 0.88), 0.01);
-  //std::shared_ptr<Hittable> box1 = std::make_shared<Box>(glm::dvec3(0, 0, 0), glm::dvec3(165, 330, 165), aluminium);
-  //box1 = make_shared<RotateYAxis>(box1, 15);
-  //box1 = make_shared<Translate>(box1, glm::vec3(265, 0, 295));
-  //world.add(box1);
-
+  
+  std::shared_ptr<Material> aluminium = std::make_shared<Metal>(glm::vec3(0.8, 0.85, 0.88), 0.01); 
+  
   //std::shared_ptr<Hittable> box2 = box(glm::dvec3(0, 0, 0), glm::dvec3(165, 165, 165), white);
   //box2 = make_shared<RotateYAxis>(box2, -18);
   //box2 = make_shared<Translate>(box2, glm::vec3(130, 0, 65));
   //world.add(box2);
 
-  // Glass Sphere
-  //std::shared_ptr<Dielectric> glass = std::make_shared<Dielectric>(1.5);
-  //world.add(std::make_shared<Sphere>(glm::dvec3(190, 90, 190), 90, glass));
-
   //world.add(std::make_shared<Triangle>(glm::dvec3(390, 0, 295), glm::dvec3(-260, 0 , 0), glm::dvec3(-130, 295, 0), light));
-  auto aluminium = std::make_shared<Metal>(glm::vec3(0.8, 0.85, 0.88), 0.01);
-  auto shape_under_test = std::make_shared<Triangle>(
-    glm::dvec3(390, 0, 295),
-    glm::dvec3(-260, 0, 0),
-    glm::dvec3(-130, 295, 0),
-    aluminium // not a light!
-  );
-  world.add(shape_under_test);
+  //std::shared_ptr<Hittable> test_box = std::make_shared<Box>(
+  //  glm::dvec3(190, 0, 190),              // base min corner
+  //  glm::dvec3(280, 165, 280),            // top max corner (90 units high box)
+  //  aluminium                             // non-light material
+  //);
+  //test_box = std::make_shared<RotateYAxis>(test_box, 15);
+  //
+  //world.add(test_box);
+  //
+  //std::shared_ptr<Hittable> test_box_light = std::make_shared<Box>(
+  //  glm::dvec3(190, 0, 190),              // base min corner
+  //  glm::dvec3(280, 165, 280),            // top max corner (90 units high box)
+  //  empty_material// non-light material
+  //);
+  //test_box_light = std::make_shared<RotateYAxis>(test_box_light, 15);
+  //lights.add(test_box_light);
+  
+  //auto test_cone = std::make_shared<Cone>(
+  //  glm::dvec3(278, 0, 278),           // Base centered in Cornell Box
+  //  glm::dvec3(65, 0, 0),              // u = 65 units wide
+  //  glm::dvec3(0, 0, -65),              // v = -65 units deep so the cross product points up
+  //  120,                               // Height up to 120
+  //  32,
+  //  aluminium
+  //);
+  //world.add(test_cone);
+  //
+  //
+  //auto test_cone_light = std::make_shared<Cone>(
+  //  glm::dvec3(278, 0, 278),           // Base centered in Cornell Box
+  //  glm::dvec3(65, 0, 0),              // u = 65 units wide
+  //  glm::dvec3(0, 0, -65),              // v = 65 units deep
+  //  120,                               // Height up to 120
+  //  32,
+  //  empty_material
+  //);
+  //lights.add(test_cone_light);
 
-  lights.add(std::make_shared<Triangle>(
-    glm::dvec3(390, 0, 295),
-    glm::dvec3(-260, 0, 0),
-    glm::dvec3(-130, 295, 0),
+  std::shared_ptr<Hittable> test_pyramid = std::make_shared<Cylindroid>(
+    glm::dvec3(278, 0, 278),           // Base centered in Cornell Box
+    glm::dvec3(65, 0, 0),              // u = 65 units wide
+    glm::dvec3(0, 0, -65),              // v = -65 units deep so the cross product points up
+    120,                               // Height up to 120
+    32,
+    aluminium
+  );
+  //test_pyramid = std::make_shared<RotateYAxis>(test_pyramid, 15);
+  world.add(test_pyramid);
+
+  std::shared_ptr<Hittable> test_pyramid_light = std::make_shared<Cylindroid>(
+    glm::dvec3(278, 0, 278),           // Base centered in Cornell Box
+    glm::dvec3(65, 0, 0),              // u = 65 units wide
+    glm::dvec3(0, 0, -65),              // v = 65 units deep
+    120,                               // Height up to 120
+    32,
     empty_material
-  ));
+  );
+  lights.add(test_pyramid_light);
 
   Camera cam;
 

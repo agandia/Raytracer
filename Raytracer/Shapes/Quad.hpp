@@ -19,6 +19,8 @@ class Quad : public Hittable {
 
     inline virtual AABB bounding_box() const override { return bbox; }
 
+    inline double surface_area() const { return bbox.surface_area(); }
+
     virtual bool hit(const Ray& ray, Interval ray_t, HitRecord& rec) const override;
 
     virtual bool is_interior(double a, double b, HitRecord& rec) const;

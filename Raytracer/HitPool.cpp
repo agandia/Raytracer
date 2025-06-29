@@ -1,6 +1,6 @@
 #include "HitPool.hpp"
 #include "Utilities.hpp"
-
+#include "Shapes/Cone.hpp"
 HitPool::HitPool(std::shared_ptr<Hittable> object) { add(object); }
 
 void HitPool::clear() { hit_objects.clear(); }
