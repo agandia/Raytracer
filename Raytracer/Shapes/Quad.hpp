@@ -4,7 +4,6 @@
 #include <glm/glm.hpp>
 
 #include "../Hittable.hpp"
-#include "../HitPool.hpp"
 #include "../Material.hpp"
 #include "../AABB.hpp"
 #include "../Ray.hpp"
@@ -41,12 +40,3 @@ class Quad : public Hittable {
     double D;
 
 };
-/*
-std::shared_ptr<HitPool> box(const glm::dvec3& corner_a, const glm::dvec3& corner_b, std::shared_ptr<Material> m);
-
-std::shared_ptr<HitPool> pyramid(const glm::dvec3& Q, const glm::dvec3& u, const glm::dvec3& v, double apex, std::shared_ptr<Material> m);
-
-std::shared_ptr<HitPool> cylindroid(const glm::dvec3& Q, const glm::dvec3& u, const glm::dvec3& v, double height,int segments, std::shared_ptr<Material> m);
-
-std::shared_ptr<HitPool> cone(const glm::dvec3& Q, const glm::dvec3& u, const glm::dvec3& v, double height, int segments, std::shared_ptr<Material> m);
-*/

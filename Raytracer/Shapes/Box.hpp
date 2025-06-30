@@ -3,7 +3,7 @@
 #include <array>
 
 #include "../Hittable.hpp"
-#include "../HitPool.hpp"
+#include "../BVH.hpp"
 #include "Quad.hpp"
 
 class Box : public Hittable {
@@ -16,7 +16,8 @@ public:
   virtual glm::dvec3 random(const glm::dvec3& origin) const override;
 
 private:
-  std::shared_ptr<HitPool> sides;
+  std::shared_ptr<Hittable> sides_bvh;
+  std::vector<std::shared_ptr<Hittable>> face_list;
   std::array<double, 6> face_weights;
   AABB bbox;
 };

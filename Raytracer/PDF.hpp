@@ -3,7 +3,6 @@
 #include <glm/glm.hpp>
 
 #include "OrthonormalBasis.hpp"
-#include "HitPool.hpp"
 
 // Probability Density Function (PDF)
 class PDF {

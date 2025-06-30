@@ -1,6 +1,6 @@
 #pragma once
 #include "../Hittable.hpp"
-#include "../HitPool.hpp"
+#include "../BVH.hpp"
 #include "Ellipse.hpp"
 #include "Triangle.hpp"
 
@@ -14,7 +14,8 @@ public:
   virtual glm::dvec3 random(const glm::dvec3& origin) const override;
 
 private:
-  std::shared_ptr<HitPool> sides;
+  std::shared_ptr<Hittable> sides_bvh;
+  std::vector<std::shared_ptr<Hittable>> face_list;
   std::vector<double> surface_areas;
   AABB bbox;
 };
