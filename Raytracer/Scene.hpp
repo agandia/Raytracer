@@ -848,6 +848,12 @@ void dipole_diffusion_profile_test() {
   world.add(std::make_shared<Sphere>(glm::dvec3(175, 100, 270), 100.0, lambertian_orange));
   world.add(std::make_shared<Sphere>(glm::dvec3(375, 100, 270), 100.0, fake_sss));
 
+  // Light source behind SSS sphere (bright small sphere)
+  auto back_light_material = std::make_shared<DiffuseLight>(glm::vec3(20.f, 20.f, 20.f));
+  world.add(std::make_shared<Sphere>(glm::dvec3(375, 100, 500), 30.0, back_light_material));
+  lights.add(std::make_shared<Sphere>(glm::dvec3(375, 100, 500), 30.0, empty_material));
+
+
   Camera cam;
 
   cam.aspect_ratio = 1;

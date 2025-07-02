@@ -82,4 +82,28 @@ public:
     double t = (u - cdf[idx - 1]) / (cdf[idx] - cdf[idx - 1]);
     return glm::mix(radii[idx - 1], radii[idx], t);
   }
+
+  // PDF value of sampling radius r on the surface disk
+  double pdf_value(double r) const {
+    if (r < 0) return 0.0;  // radius must be positive
+
+    double profile_val = diffuse_profile(r);
+    return 2.0 * pi * r * profile_val;
+  }
+
+  // Sample radius r from the diffuse profile (approximate)
+  double random_radius() const {
+    double xi = random_double(); // uniform random [0,1)
+    return -std::log(1.0 - xi) / sigma_tr;
+  }
+
+  // Full 2D disk sample on surface plane around hit point
+  glm::dvec3 random(double /*unused*/) const {
+    double r = random_radius();
+    double theta = 2.0 * pi * random_double();
+    double x = r * std::cos(theta);
+    double y = r * std::sin(theta);
+    return glm::dvec3(x, y, 0.0); // Local tangent plane coordinates
+  }
+
 };

@@ -161,45 +161,68 @@ public:
     {}
 
   bool scatter(const Ray& in, const HitRecord& rec, ScatterRecord& srec) const override {
-    // Create tangent frame
+    // Build orthonormal basis for disk sampling in surface plane
     OrthoNormalBasis onb(rec.normal);
 
-    // 1. Sample radius and angle
-    //double u1 = random_double();
-    //double u2 = random_double();
-    //double r = bssrdf->sample_radius(u1);
-    //glm::dvec2 disk_uv = sample_disk(1.0, u2); // We want uniform angle
-    //disk_uv *= r;
-    // Alternative impl reusing sample disk
+    // 1. Sample a radius from BSSRDF diffusion profile
     double r = bssrdf->sample_radius(random_double());
-    glm::dvec3 disk_offset = r * random_in_unit_disk(); // Already returns (x, y, 0)
 
-    // 2. Compute new exit point in world space
-    //glm::dvec3 offset = onb.u() * disk_uv.x + onb.v() * disk_uv.y;
-    glm::dvec3 offset = onb.u() * disk_offset.x + onb.v() * disk_offset.y;
-    glm::dvec3 new_point = rec.p + offset;
+    // 2. Sample random angle and offset on the disk
+    glm::dvec2 disk = random_in_unit_disk();
+    glm::dvec3 disk_offset = r * glm::dvec3(disk.x, disk.y, 0.0);
 
-    // 3. Evaluate diffuse_profile(r) for attenuation
-    double profile_weight = bssrdf->diffuse_profile(r);
+    // 3. Offset from the entry point along surface tangent plane
+    glm::dvec3 exit_offset =
+      disk_offset.x * onb.u() +
+      disk_offset.y * onb.v(); // NOTE: onb.w() is the normal
+
+    glm::dvec3 exit_point = rec.p + exit_offset;
+
+    // 4. Compute profile between entry and exit
+    double profile = bssrdf->diffuse_profile(r);
+
+    // 5. Final attenuation
     glm::vec3 base_color = albedo->color_value(rec.u, rec.v, rec.p);
-    glm::vec3 attenuation = static_cast<float>(profile_weight * 500.0) * base_color;
+    glm::vec3 atten = static_cast<float>(profile * 500.0) * base_color;
 
-    // 4. Set up new scattered ray — straight out of surface
-    glm::dvec3 out_dir = rec.normal; // or slight jitter?
-    Ray scattered(new_point + 1e-4 * rec.normal, out_dir, in.time());
+    // 6. Sample outgoing direction from cosine-weighted hemisphere
+    glm::dvec3 out_dir = onb.transform(random_cosine_direction());
 
-    srec.attenuation = attenuation;
-    srec.skip_pdf = false;
-    srec.skip_pdf_ray = scattered;
+    // 7. Fill scatter record
+    srec.attenuation = atten;
     srec.pdf_ptr = std::make_shared<CosinePDF>(rec.normal);
+    srec.skip_pdf = false;
+    srec.skip_pdf_ray = Ray(exit_point, out_dir, in.time());
 
     return true;
   }
 
   double scattering_pdf(const Ray& r_in, const HitRecord& rec, const Ray& scattered) const override {
-    double cos_theta = glm::dot(glm::normalize(rec.normal), glm::normalize(scattered.direction()));
-    return (cos_theta < 0.0) ? 0.0 : cos_theta / pi;
+    // Build ONB for surface normal
+    OrthoNormalBasis onb(rec.normal);
+
+    // Vector from entry point to scattered origin
+    glm::dvec3 exit_offset = scattered.origin() - rec.p;
+
+    // Project exit_offset into tangent plane (u,v)
+    double x = glm::dot(exit_offset, onb.u());
+    double y = glm::dot(exit_offset, onb.v());
+
+    double r = std::sqrt(x * x + y * y);
+
+    // Calculate radius PDF
+    double radius_pdf = bssrdf->pdf_value(r);
+
+    // Cosine PDF for outgoing direction (assuming cosine-weighted)
+    double cosine = glm::dot(glm::normalize(scattered.direction()), rec.normal);
+    if (cosine <= 0) return 0.0;
+
+    double cosine_pdf = cosine / pi;
+
+    // Total PDF is product of radius sampling and directional sampling
+    return radius_pdf * cosine_pdf;
   }
+
 
   glm::vec3 emitted(const Ray& r_in, const HitRecord& rec, double u, double v, const glm::dvec3& p) const override {
     return glm::vec3(0);
