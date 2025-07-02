@@ -800,3 +800,68 @@ void prob_dens_func_test() {
 
   cam.render(world, lights);
 }
+
+void dipole_diffusion_profile_test() {
+
+  HitPool world;
+
+  // Materials
+  auto red = std::make_shared<Lambertian>(glm::vec3(.65, 0.05, 0.05));
+  auto white = std::make_shared<Lambertian>(glm::vec3(0.73, 0.73, 0.73));
+  auto green = std::make_shared<Lambertian>(glm::vec3(0.12, 0.45, 0.15));
+  auto light = std::make_shared<DiffuseLight>(glm::vec3(15.f, 15.f, 15.f));
+
+  // Quads forming the cornell box
+  world.add(std::make_shared<Quad>(glm::dvec3(555, 0, 0), glm::dvec3(0, 555, 0), glm::dvec3(0, 0, 555), green));
+  world.add(std::make_shared<Quad>(glm::dvec3(0, 0, 0), glm::dvec3(0, 555, 0), glm::dvec3(0, 0, 555), red));
+  world.add(std::make_shared<Quad>(glm::dvec3(0, 0, 0), glm::dvec3(555, 0, 0), glm::dvec3(0, 0, 555), white));
+  world.add(std::make_shared<Quad>(glm::dvec3(555, 555, 555), glm::dvec3(-555, 0, 0), glm::dvec3(0, 0, -555), white));
+  world.add(std::make_shared<Quad>(glm::dvec3(0, 0, 555), glm::dvec3(555, 0, 0), glm::dvec3(0, 555, 0), white));
+
+  //Light
+  world.add(std::make_shared<Quad>(glm::dvec3(343, 554, 332), glm::dvec3(-130, 0, 0), glm::dvec3(0, 0, -105), light));
+  // Light Sources
+  std::shared_ptr<Material> empty_material = std::shared_ptr<Material>();
+  HitPool lights;
+  lights.add(std::make_shared<Quad>(glm::dvec3(343, 554, 332), glm::dvec3(-130, 0, 0), glm::dvec3(0, 0, -105), empty_material));
+
+  // Here go the spheres to test dipole diffusion profile, neatly placed in the view rectangle
+  // Dipole BSSRDF sampler parameters
+  auto bssrdf = std::make_shared<BSSRDFSampler>(
+    /* sigma_s = */ 0.3,
+    /* sigma_a = */ 0.001,
+    /* g = */ 0.0
+  );
+
+  // Reference: plain red Lambertian
+  auto lambertian_orange = std::make_shared<Lambertian>(glm::vec3(1.0, 0.5, 0.3));
+
+  // Subsurface: orange, simulates SSS via diffuse profile
+  auto fake_sss = std::make_shared<SubsurfaceMaterial>(
+    glm::vec3(1.0, 0.5, 0.3),
+    1.3, // IOR
+    1.0, 0.1, 0.8,
+    bssrdf
+  );
+
+  // Place two spheres side-by-side
+  world.add(std::make_shared<Sphere>(glm::dvec3(175, 100, 270), 100.0, lambertian_orange));
+  world.add(std::make_shared<Sphere>(glm::dvec3(375, 100, 270), 100.0, fake_sss));
+
+  Camera cam;
+
+  cam.aspect_ratio = 1;
+  cam.image_width = 600;
+  cam.samples_per_pixel = 1000;
+  cam.max_depth = 50;
+  cam.background = glm::vec3(0.0, 0.0, 0.0); // Black background
+
+  cam.vertical_fov = 40;
+  cam.look_from = glm::dvec3(278, 278, -800);
+  cam.look_at = glm::dvec3(278, 278, 0);
+  cam.view_up = glm::dvec3(0, 1, 0);
+
+  cam.defocus_angle = 0;
+
+  cam.render(world, lights);
+}

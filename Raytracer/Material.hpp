@@ -2,6 +2,7 @@
 
 #include "Hittable.hpp"
 #include "TextureWrapper.hpp"
+#include "BSSRDFSampler.hpp"
 #include "Ray.hpp"
 #include "Utilities.hpp"
 #include "PDF.hpp"
@@ -153,19 +154,54 @@ public:
   double scattering_coefficient;  // σ_s
   double absorption_coefficient;  // σ_a
   double g;  // asymmetry parameter for phase function (e.g. Henyey-Greenstein)
+  std::shared_ptr<BSSRDFSampler> bssrdf;
 
-  SubsurfaceMaterial(std::shared_ptr<ITexture> a, double ior, double sigma_s, double sigma_a, double g_)
-    : albedo(a), index_of_refraction(ior),
-    scattering_coefficient(sigma_s), absorption_coefficient(sigma_a), g(g_) {
+  SubsurfaceMaterial(const glm::vec3& albedo, double ior, double sigma_s, double sigma_a, double g_, std::shared_ptr<BSSRDFSampler> bssrdf_sampler)
+    : albedo(std::make_shared<SolidColorTexture>(albedo)), index_of_refraction(ior), scattering_coefficient(sigma_s), absorption_coefficient(sigma_a), g(g_), bssrdf(bssrdf_sampler)
+    {}
+
+  bool scatter(const Ray& in, const HitRecord& rec, ScatterRecord& srec) const override {
+    // Create tangent frame
+    OrthoNormalBasis onb(rec.normal);
+
+    // 1. Sample radius and angle
+    //double u1 = random_double();
+    //double u2 = random_double();
+    //double r = bssrdf->sample_radius(u1);
+    //glm::dvec2 disk_uv = sample_disk(1.0, u2); // We want uniform angle
+    //disk_uv *= r;
+    // Alternative impl reusing sample disk
+    double r = bssrdf->sample_radius(random_double());
+    glm::dvec3 disk_offset = r * random_in_unit_disk(); // Already returns (x, y, 0)
+
+    // 2. Compute new exit point in world space
+    //glm::dvec3 offset = onb.u() * disk_uv.x + onb.v() * disk_uv.y;
+    glm::dvec3 offset = onb.u() * disk_offset.x + onb.v() * disk_offset.y;
+    glm::dvec3 new_point = rec.p + offset;
+
+    // 3. Evaluate diffuse_profile(r) for attenuation
+    double profile_weight = bssrdf->diffuse_profile(r);
+    glm::vec3 base_color = albedo->color_value(rec.u, rec.v, rec.p);
+    glm::vec3 attenuation = static_cast<float>(profile_weight * 500.0) * base_color;
+
+    // 4. Set up new scattered ray — straight out of surface
+    glm::dvec3 out_dir = rec.normal; // or slight jitter?
+    Ray scattered(new_point + 1e-4 * rec.normal, out_dir, in.time());
+
+    srec.attenuation = attenuation;
+    srec.skip_pdf = false;
+    srec.skip_pdf_ray = scattered;
+    srec.pdf_ptr = std::make_shared<CosinePDF>(rec.normal);
+
+    return true;
   }
 
-  virtual bool scatter(const Ray& r_in, const HitRecord& rec, ScatterRecord& srec) const override {
-  
+  double scattering_pdf(const Ray& r_in, const HitRecord& rec, const Ray& scattered) const override {
+    double cos_theta = glm::dot(glm::normalize(rec.normal), glm::normalize(scattered.direction()));
+    return (cos_theta < 0.0) ? 0.0 : cos_theta / pi;
   }
 
-  virtual double scattering_pdf(const Ray& r_in, const HitRecord& rec, const Ray& scattered) const override;
-  
-  virtual glm::vec3 emitted(const Ray& r_in, const HitRecord& rec, double u, double v, const glm::dvec3& p) const override {
-    return glm::vec3(0, 0, 0);
+  glm::vec3 emitted(const Ray& r_in, const HitRecord& rec, double u, double v, const glm::dvec3& p) const override {
+    return glm::vec3(0);
   }
 };

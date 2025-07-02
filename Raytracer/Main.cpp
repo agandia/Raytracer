@@ -1,7 +1,7 @@
 #include "Scene.hpp"
 
 int main() {
-  switch (0) {
+  switch (13) {
   case 1: bouncing_spheres();  break;
   case 2: checkered_spheres(); break;
   case 3: earth(); break;
@@ -14,6 +14,7 @@ int main() {
   case 10: final_scene(1920, 10000, 40); break;
   case 11: glass_pyr_test(); break;
   case 12: prob_dens_func_test(); break;
+  case 13: dipole_diffusion_profile_test(); break;
   default: boosted_scene(800, 5000, 50); break;
   //default: boosted_scene(800, 100, 50); break;
   }

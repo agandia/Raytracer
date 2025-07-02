@@ -59,6 +59,12 @@ inline glm::dvec3 random_in_unit_disk() {
   }
 }
 
+inline glm::dvec2 sample_disk(double u1, double u2) {
+  double r = std::sqrt(u1);
+  double theta = 2.0 * pi * u2;
+  return glm::dvec2(r * std::cos(theta), r * std::sin(theta));
+}
+
 inline glm::dvec3 random_on_hemisphere(const glm::dvec3& normal) {
   glm::dvec3 on_unit_sphere = random_unit_vector();
   if (glm::dot(on_unit_sphere, normal) > 0.0) { // In the same hemisphere as the normal
