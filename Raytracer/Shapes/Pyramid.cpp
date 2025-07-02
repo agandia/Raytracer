@@ -68,7 +68,7 @@ double Pyramid::pdf_value(const glm::dvec3& origin, const glm::dvec3& direction)
   for (size_t i = 0; i < face_list.size(); ++i) {
     pdf += surface_areas[i] * face_list[i]->pdf_value(origin, direction);
   }
-  return std::max(pdf, 1e-4); // Avoid numerical explosion from 1/pdf
+  return std::max(pdf, 1e-6); // Avoid numerical explosion from 1/pdf
 }
 
 glm::dvec3 Pyramid::random(const glm::dvec3& origin) const {

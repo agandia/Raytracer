@@ -35,7 +35,7 @@ public:
     double distance_squared = rec.t * rec.t * glm::length2(direction);
     double cosine = glm::abs(glm::dot(direction, rec.normal) / glm::length(direction));
 
-    return distance_squared / (cosine * area);
+    return distance_squared / (cosine * surface_area());
   }
 
   virtual glm::dvec3 random(const glm::dvec3& origin) const {

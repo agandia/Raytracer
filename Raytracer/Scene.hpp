@@ -549,7 +549,7 @@ void boosted_scene(int image_width, int samples_per_pixel, int max_depth) {
   world.add(std::make_shared<Sphere>(glm::dvec3(220, 280, 300), 80, porcelain));
 
   // Right noise sphere
-  //world.add(std::make_shared<Sphere>(glm::dvec3(-150, 330, 350), 40, noise));
+  world.add(std::make_shared<Sphere>(glm::dvec3(-150, 330, 350), 40, noise));
 
   // Particle cloud
   HitPool boxes2;
@@ -563,16 +563,12 @@ void boosted_scene(int image_width, int samples_per_pixel, int max_depth) {
 
   // Rotated metal pyramid
   HitPool pyramids;
-  pyramids.add(std::make_shared<Pyramid>(glm::dvec3(-150, 220, 445), glm::dvec3(60, 0, 0), glm::dvec3(0, 0, -60), 80, blue_frost)); // !! WARNING !! might render poorly
+  pyramids.add(std::make_shared<Pyramid>(glm::dvec3(-170, 180, 375), glm::dvec3(60, 0, 0), glm::dvec3(0, 0, -60), 80, blue_frost)); // !! WARNING !! might render poorly
   world.add(std::make_shared<RotateYAxis>(std::make_shared<BVHNode>(pyramids), 15));
+  
   //HitPool pyram_light;
-  //pyram_light.add(std::make_shared<Pyramid>(
-  //  glm::dvec3(0, 0, 0), glm::dvec3(60, 0, 0), glm::dvec3(0, 0, -60), 80, empty_material
-  //));
-  //lights.add(std::make_shared<Translate>(
-  //  std::make_shared<RotateYAxis>(std::make_shared<BVHNode>(pyram_light), 15),
-  //  glm::dvec3(-150, 220, 445)
-  //));
+  //pyram_light.add(std::make_shared<Pyramid>(glm::dvec3(0, 0, 0), glm::dvec3(60, 0, 0), glm::dvec3(0, 0, -60), 80, empty_material));
+  //lights.add(std::make_shared<Translate>(std::make_shared<RotateYAxis>(std::make_shared<BVHNode>(pyram_light), 15), glm::dvec3(-150, 220, 445)));
 
   // Glass pyramid
   glm::dvec3 base_origin = glm::dvec3(270, 354, 300);
@@ -581,23 +577,16 @@ void boosted_scene(int image_width, int samples_per_pixel, int max_depth) {
   double height = 100.0;
   world.add(std::make_shared<Pyramid>(base_origin, u, v, height, glass));
   //lights.add(std::make_shared<Pyramid>(base_origin, u, v, height, empty_material));
-  //glm::dvec3 apex = base_origin + 0.5 * u + 0.5 * v + glm::dvec3(0, height, 0);
-  //world.add(std::make_shared<Sphere>(apex - glm::dvec3(0, 2.5, 0), 2.5, glass));
-  //lights.add(std::make_shared<Sphere>(apex - glm::dvec3(0, 2.5, 0), 2.5, empty_material));
 
   // Cone: metal and glass
   auto cone_pos = glm::dvec3(0, 90, 440);
-  world.add(std::make_shared<Cone>(cone_pos, glm::dvec3(30, 90, 0), glm::dvec3(0, 0, 30), 80, 32, brushed_metal
-  ));
-  //lights.add(std::make_shared<Cone>(
-  //  cone_pos, glm::dvec3(30, 90, 0), glm::dvec3(0, 0, 30), 80, 32, empty_material
-  //));
-  world.add(std::make_shared<Cone>(glm::dvec3(0, 550, 250), glm::dvec3(-30, 0, 0), glm::dvec3(0, 0, -30), 80, 32, red));
-  //lights.add(std::make_shared<Cone>(
-  //  glm::dvec3(-460, 90, 250), glm::dvec3(30, 0, 0), glm::dvec3(0, 0, 30), 80, 32, empty_material
-  //));
+  world.add(std::make_shared<Cone>(cone_pos, glm::dvec3(30, 90, 0), glm::dvec3(0, 0, 30), 80, 32, brushed_metal));
+  //lights.add(std::make_shared<Cone>(cone_pos, glm::dvec3(30, 90, 0), glm::dvec3(0, 0, 30), 80, 32, empty_material));
 
-  // Cylindroid: white and noise
+  world.add(std::make_shared<Cone>(glm::dvec3(0, 550, 250), glm::dvec3(-30, 0, 0), glm::dvec3(0, 0, -30), 80, 32, red));
+  //lights.add(std::make_shared<Cone>(glm::dvec3(-460, 90, 250), glm::dvec3(30, 0, 0), glm::dvec3(0, 0, 30), 80, 32, empty_material));
+
+  // Cylindroid: asphalt and charcoal
   auto cyl_pos = glm::dvec3(100, 50, 100);
   world.add(std::make_shared<Cylindroid>(cyl_pos, glm::dvec3(20, 0, 0), glm::dvec3(0, 0, -20), 80, 16, asphalt));
   world.add(std::make_shared<Cylindroid>(cyl_pos + glm::dvec3(50, 0, 0), glm::dvec3(20, 0, 0), glm::dvec3(0, 0, -20), 80, 16, charcoal_metal));

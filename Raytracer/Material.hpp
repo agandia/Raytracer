@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "Hittable.hpp"
 #include "TextureWrapper.hpp"
@@ -144,4 +144,28 @@ public:
 
 private:
   std::shared_ptr<ITexture> tex;
+};
+
+class SubsurfaceMaterial : public Material {
+public:
+  std::shared_ptr<ITexture> albedo;
+  double index_of_refraction;
+  double scattering_coefficient;  // σ_s
+  double absorption_coefficient;  // σ_a
+  double g;  // asymmetry parameter for phase function (e.g. Henyey-Greenstein)
+
+  SubsurfaceMaterial(std::shared_ptr<ITexture> a, double ior, double sigma_s, double sigma_a, double g_)
+    : albedo(a), index_of_refraction(ior),
+    scattering_coefficient(sigma_s), absorption_coefficient(sigma_a), g(g_) {
+  }
+
+  virtual bool scatter(const Ray& r_in, const HitRecord& rec, ScatterRecord& srec) const override {
+  
+  }
+
+  virtual double scattering_pdf(const Ray& r_in, const HitRecord& rec, const Ray& scattered) const override;
+  
+  virtual glm::vec3 emitted(const Ray& r_in, const HitRecord& rec, double u, double v, const glm::dvec3& p) const override {
+    return glm::vec3(0, 0, 0);
+  }
 };

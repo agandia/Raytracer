@@ -22,13 +22,13 @@ void Quad::set_bounding_box()
 
 bool Quad::hit(const Ray& ray, Interval ray_t, HitRecord& rec) const
 {
-  double denom = glm::dot(normal, ray.direction());
+  double denom = glm::dot(glm::normalize(normal), ray.direction());
 
   // Early exit if ray is parallel to the plane
   if (glm::abs(denom) < 1e-8) return false;
 
   //Early exit if the hit point is outside of the ray interval
-  double t = (D - glm::dot(normal, ray.origin())) / denom;
+  double t = (D - glm::dot(glm::normalize(normal), ray.origin())) / denom;
   if (!ray_t.contains(t)) return false;
 
   // Determine if the hit point lies within the planar shape using its plane coordinates.
@@ -44,7 +44,7 @@ bool Quad::hit(const Ray& ray, Interval ray_t, HitRecord& rec) const
   rec.t = t;
   rec.p = intersection;
   rec.material = material;
-  rec.set_face_normal(ray, normal);
+  rec.set_face_normal(ray, glm::normalize(normal));
 
   if (glm::dot(rec.normal, ray.direction()) > 0)
     std::cerr << "WARNING: Backface normal detected\n";

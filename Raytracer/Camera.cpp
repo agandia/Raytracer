@@ -150,6 +150,7 @@ glm::vec3 Camera::ray_color(const Ray& ray, int depth, const Hittable& world, co
 
   Ray scattered_ray = Ray(hit_record.p, p.generate(), ray.time());
   double pdf_value = p.value(scattered_ray.direction());
+  if (pdf_value < 1e-6) return emitted_color; // Avoids singularities
 
   double scattering_pdf = hit_record.material->scattering_pdf(ray, hit_record, scattered_ray);
   

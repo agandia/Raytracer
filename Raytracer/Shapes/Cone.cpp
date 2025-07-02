@@ -44,7 +44,7 @@ double Cone::pdf_value(const glm::dvec3& origin, const glm::dvec3& direction) co
   for (size_t i = 0; i < face_list.size(); ++i) {
     pdf += surface_areas[i] * face_list[i]->pdf_value(origin, direction);
   }
-  return std::max(pdf, 1e-4);
+  return std::max(pdf, 1e-6);
 }
 
 glm::dvec3 Cone::random(const glm::dvec3& origin) const {

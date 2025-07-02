@@ -34,7 +34,7 @@ public:
       return 0;
 
     // Triangle area = 0.5 * |u × v|, already stored in area from Quad constructor
-    return distance_squared / (cosine * area);
+    return distance_squared / (cosine * surface_area());
   }
 
   virtual glm::dvec3 random(const glm::dvec3& origin) const {
