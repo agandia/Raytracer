@@ -2,6 +2,7 @@
 #include <fstream>
 #include <chrono>
 #include <omp.h>
+#include <string>
 
 #include "Camera.hpp"
 #include "Utilities.hpp"
@@ -128,8 +129,11 @@ glm::vec3 Camera::ray_color(const Ray& ray, int depth, const Hittable& world, co
 
   HitRecord hit_record;
   // Add a small delta to the interval to avoid self-intersection (shadow acne)
-  if (!world.hit(ray, Interval(0.00001, infinity), hit_record)) {
+  if (!world.hit(ray, Interval(0.001, infinity), hit_record)) {
     // If the ray does not hit anything, return the background color
+    //std::cout << "Ray missed world! Origin: " << std::to_string(ray.origin().x) << ", " << std::to_string(ray.origin().y) << "," << std::to_string(ray.origin().z)
+    //  << ", dir: " << std::to_string(ray.direction().x) << "," << std::to_string(ray.direction().y) << "," << std::to_string(ray.direction().z) <<"\n";
+
     return background;
   }
 

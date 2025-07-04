@@ -3,10 +3,12 @@
 #include "Ray.hpp"
 #include "Interval.hpp"
 #include "AABB.hpp"
+#include "OrthonormalBasis.hpp"
 #include <memory>
 #include <glm/glm.hpp>
 
 class Material; // Forward declaration of Material class
+class Hittable;
 
 class HitRecord {
   public:
@@ -17,6 +19,8 @@ class HitRecord {
     double u;                           ///< Texture coordinate u
     double v;                           ///< Texture coordinate v
     bool front_face;                    ///< Indicates if the ray hit the front face of the object
+
+    const Hittable* shape_ptr; ///< We use this to cast into the actual shape in subsurface Scattering
 
     void set_face_normal(const Ray& r, const glm::dvec3& outward_normal) {
         front_face = glm::dot(r.direction(), outward_normal) < 0;
@@ -40,6 +44,16 @@ class Hittable {
 
     virtual glm::dvec3  random(const glm::dvec3& origin) const {
       return glm::dvec3(1, 0, 0);
+    }
+
+    virtual glm::dvec3 map_exit_point(const glm::dvec3& p_entry, const glm::dvec3& normal, const glm::dvec2& disk_sample, const double radius) const {
+      //Default fallback: naive tangent plane offset
+      OrthoNormalBasis onb(normal);
+      return p_entry + disk_sample.x * onb.u() + disk_sample.y * onb.v();
+    }
+
+    virtual glm::dvec3 normal_at(const glm::dvec3& p) const {
+      return glm::dvec3(0.0); // Default fallback
     }
 };
 

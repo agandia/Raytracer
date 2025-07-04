@@ -45,6 +45,7 @@ bool Quad::hit(const Ray& ray, Interval ray_t, HitRecord& rec) const
   rec.p = intersection;
   rec.material = material;
   rec.set_face_normal(ray, glm::normalize(normal));
+  rec.shape_ptr = this;
 
   if (glm::dot(rec.normal, ray.direction()) > 0)
     std::cerr << "WARNING: Backface normal detected\n";
@@ -83,4 +84,30 @@ double Quad::pdf_value(const glm::dvec3& origin, const glm::dvec3& direction) co
 glm::dvec3 Quad::random(const glm::dvec3& origin) const {
   glm::dvec3 random_point = Q + (u * random_double()) + (v * random_double());
   return random_point - origin;
+}
+
+// In Quad class (if not already present)
+glm::dvec2 Quad::world_to_uv(const glm::dvec3& p) const {
+  glm::dvec3 local = p - Q;
+  double U = glm::dot(local, u) / glm::dot(u, u);
+  double V = glm::dot(local, v) / glm::dot(v, v);
+  return glm::dvec2(U, V);
+}
+
+glm::dvec3 Quad::uv_to_world(const glm::dvec2& uv) const {
+  return Q + uv.x * u + uv.y * v;
+}
+
+glm::dvec3 Quad::map_exit_point(const glm::dvec3& p_entry, const glm::dvec3& normal, const glm::dvec2& disk_sample, const double radius) const {
+  glm::dvec3 approx = p_entry +
+    disk_sample.x * glm::normalize(u) +
+    disk_sample.y * glm::normalize(v);
+
+  glm::dvec2 uv = world_to_uv(approx);
+  uv = glm::clamp(uv, glm::dvec2(0), glm::dvec2(1));
+  return uv_to_world(uv);
+}
+
+glm::dvec3 Quad::normal_at(const glm::dvec3& p) const {
+  return normal; // Flat surface, same normal everywhere
 }

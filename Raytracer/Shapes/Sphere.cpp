@@ -31,7 +31,8 @@ bool Sphere::hit(const Ray& ray, Interval interval, HitRecord& rec) const {
     rec.set_face_normal(ray, outward_normal); // Normal at the intersection point
     get_sphere_uv(outward_normal, rec.u, rec.v); // Texture coordinates
     rec.material = mat; // Material of the sphere
-    
+    rec.shape_ptr = this;
+
     return true;
 }
 
@@ -81,4 +82,29 @@ glm::dvec3 Sphere::random(const glm::dvec3& origin) const {
   double distance_squared = glm::length2(direction);
   OrthoNormalBasis basis(direction);
   return basis.transform(random_to_sphere(radius, distance_squared));
+}
+
+glm::dvec3 Sphere::map_exit_point(const glm::dvec3& p_entry, const glm::dvec3& normal, const glm::dvec2& disk_sample, const double sample_radius) const {
+  OrthoNormalBasis onb(normal);
+  // Offset vector in tangent plane scaled by sample_radius (the radius from diffusion profile)
+  glm::dvec3 offset = sample_radius * (disk_sample.x * onb.u() + disk_sample.y * onb.v());
+
+  // Approximate local point on tangent plane
+  glm::dvec3 tangent_point = p_entry + offset;
+
+  // Direction from center to tangent_point
+  glm::dvec3 dir = glm::normalize(tangent_point - center.at(0));
+
+  // Exit point on sphere surface at radius along this direction
+  glm::dvec3 p_exit = center.at(0) + 1.004 *(radius * dir);
+
+  // Slightly offset p_exit along normal to avoid self-intersection
+  //p_exit += normal * 1e-4;
+
+  return p_exit;
+}
+
+
+glm::dvec3 Sphere::normal_at(const glm::dvec3& p) const {
+  return glm::normalize(p - center.at(0));
 }

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "glm/glm.hpp"
 #include "Constants.hpp"
+#include "Utilities.hpp"
 
 class BSSRDFSampler {
 public:
@@ -38,6 +39,8 @@ public:
 
   // Dipole diffuse profile R_d(r)
   double diffuse_profile(double r) const {
+    if (r < 1e-6) return 1.0;
+
     double dr = std::sqrt(r * r + zr * zr);
     double dv = std::sqrt(r * r + zv * zv);
 

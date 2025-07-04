@@ -858,8 +858,8 @@ void dipole_diffusion_profile_test() {
 
   cam.aspect_ratio = 1;
   cam.image_width = 600;
-  cam.samples_per_pixel = 1000;
-  cam.max_depth = 50;
+  cam.samples_per_pixel = 15000;
+  cam.max_depth = 200;
   cam.background = glm::vec3(0.0, 0.0, 0.0); // Black background
 
   cam.vertical_fov = 40;

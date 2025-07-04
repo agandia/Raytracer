@@ -160,39 +160,32 @@ public:
     : albedo(std::make_shared<SolidColorTexture>(albedo)), index_of_refraction(ior), scattering_coefficient(sigma_s), absorption_coefficient(sigma_a), g(g_), bssrdf(bssrdf_sampler)
     {}
 
-  bool scatter(const Ray& in, const HitRecord& rec, ScatterRecord& srec) const override {
-    // Build orthonormal basis for disk sampling in surface plane
-    OrthoNormalBasis onb(rec.normal);
-
-    // 1. Sample a radius from BSSRDF diffusion profile
+  bool scatter(const Ray& r_in, const HitRecord& rec, ScatterRecord& srec) const
+  {
+    // Step 1: Sample exit radius and generate disk sample
+    double theta = 2 * pi * random_double();
     double r = bssrdf->sample_radius(random_double());
+    glm::dvec2 disk = r * glm::dvec2(std::cos(theta), std::sin(theta));
 
-    // 2. Sample random angle and offset on the disk
-    glm::dvec2 disk = random_in_unit_disk();
-    glm::dvec3 disk_offset = r * glm::dvec3(disk.x, disk.y, 0.0);
 
-    // 3. Offset from the entry point along surface tangent plane
-    glm::dvec3 exit_offset =
-      disk_offset.x * onb.u() +
-      disk_offset.y * onb.v(); // NOTE: onb.w() is the normal
+    // Step 2: Map the exit point on the surface
+    glm::dvec3 p_exit = rec.shape_ptr->map_exit_point(rec.p, rec.normal, disk, r);
+    glm::dvec3 normal_exit = rec.shape_ptr->normal_at(p_exit);
 
-    glm::dvec3 exit_point = rec.p + exit_offset;
+    // Step 3: Compute attenuation based on distance
+    double attenuation_strength = std::max(bssrdf->diffuse_profile(glm::length(p_exit - rec.p)), 1e-4);
 
-    // 4. Compute profile between entry and exit
-    double profile = bssrdf->diffuse_profile(r);
+    glm::dvec3 attenuation = albedo->color_value(rec.u, rec.v, rec.p) * (double)attenuation_strength * 1000.0;
+    if (glm::length(attenuation) < 1e-6) return false; // discard very low contribution
 
-    // 5. Final attenuation
-    glm::vec3 base_color = albedo->color_value(rec.u, rec.v, rec.p);
-    glm::vec3 atten = static_cast<float>(profile * 500.0) * base_color;
+    // Step 4: Generate cosine-weighted scattered direction from exit point
+    auto pdf = std::make_shared<SubsurfacePDF>(normal_exit);
+    glm::dvec3 out_dir = pdf->generate();
 
-    // 6. Sample outgoing direction from cosine-weighted hemisphere
-    glm::dvec3 out_dir = onb.transform(random_cosine_direction());
-
-    // 7. Fill scatter record
-    srec.attenuation = atten;
-    srec.pdf_ptr = std::make_shared<CosinePDF>(rec.normal);
-    srec.skip_pdf = false;
-    srec.skip_pdf_ray = Ray(exit_point, out_dir, in.time());
+    srec.skip_pdf = true;
+    srec.attenuation = attenuation;
+    srec.pdf_ptr = pdf;
+    srec.skip_pdf_ray = Ray(p_exit, out_dir, r_in.time());
 
     return true;
   }

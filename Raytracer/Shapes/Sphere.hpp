@@ -37,6 +37,11 @@ class Sphere : public Hittable {
 
     glm::dvec3 random(const glm::dvec3& origin) const override;
 
+    glm::dvec3 map_exit_point(const glm::dvec3& p_entry, const glm::dvec3& normal, const glm::dvec2& disk_sample, const double radius) const override;
+
+    glm::dvec3 normal_at(const glm::dvec3& p) const override;
+
+
   private:
     static void get_sphere_uv(const glm::dvec3& p, double& u, double& v);
     static glm::dvec3 random_to_sphere(double radius, double distance_squared);

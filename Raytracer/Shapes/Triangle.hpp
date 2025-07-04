@@ -49,4 +49,27 @@ public:
     return random_point - origin;
   }
 
+  glm::dvec3 map_exit_point(const glm::dvec3& p_entry, const glm::dvec3& normal, const glm::dvec2& disk_sample, const double radius) const override {
+    // Step 1: Sample position on tangent plane
+    glm::dvec3 approx = p_entry +
+      disk_sample.x * glm::normalize(u) +
+      disk_sample.y * glm::normalize(v);
+
+    // Step 2: Convert to local u,v basis (relative to Q)
+    glm::dvec3 local = approx - Q;
+    double a = glm::dot(local, u) / glm::dot(u, u);
+    double b = glm::dot(local, v) / glm::dot(v, v);
+
+    // Step 3: Clamp to triangle bounds using barycentric check
+    if (a < 0) a = 0;
+    if (b < 0) b = 0;
+    if (a + b > 1.0) {
+      double scale = 1.0 / (a + b);
+      a *= scale;
+      b *= scale;
+    }
+
+    return Q + a * u + b * v;
+  }
+
 };
