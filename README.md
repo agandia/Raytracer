@@ -1,7 +1,11 @@
 # Raytracer
 ![Complex scene rendered with this code](https://github.com/agandia/Raytracer/blob/master/full_5000spp_50d.jpg)
+![BSSRDF using random walk](https://github.com/agandia/Raytracer/blob/master/sss.jpg)
+
 Just a tag-along of this resource https://raytracing.github.io/
-It might or might now evolve into a reimplementation of my old SSS (SubSurface Scattering) on a BSRDF (Bidirectional Scattering Reflectance Distribution Function) project
+It did end up spawning a side microproject to revive (more accurately rework) my old BSSRDF implementation. 
+This time I found a simple enough to follow Random-Walk algorithm instead of going with Dipole Diffusion.
+Future updates(?): integrate the Random-Walk material with all other geometries of the main pathtracer project.
 
 ##Build and Run this program
 
