@@ -1,6 +1,6 @@
 # Raytracer
 ![Complex scene rendered with this code](https://github.com/agandia/Raytracer/blob/master/full_5000spp_50d.jpg)
-![BSSRDF using random walk](https://github.com/agandia/Raytracer/blob/master/sss.jpg)
+![BSSRDF using random walk](https://github.com/agandia/Raytracer/blob/master/SSS.jpg)
 
 Just a tag-along of this resource https://raytracing.github.io/
 It did end up spawning a side microproject to revive (more accurately rework) my old BSSRDF implementation. 
