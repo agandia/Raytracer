@@ -1,5 +1,5 @@
 # Raytracer
-
+![Complex scene rendered with this code](https://github.com/agandia/Raytracer/blob/master/full_5000spp_50d.jpg)
 Just a tag-along of this resource https://raytracing.github.io/
 It might or might now evolve into a reimplementation of my old SSS (SubSurface Scattering) on a BSRDF (Bidirectional Scattering Reflectance Distribution Function) project
 
