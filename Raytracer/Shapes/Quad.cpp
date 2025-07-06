@@ -98,16 +98,6 @@ glm::dvec3 Quad::uv_to_world(const glm::dvec2& uv) const {
   return Q + uv.x * u + uv.y * v;
 }
 
-glm::dvec3 Quad::map_exit_point(const glm::dvec3& p_entry, const glm::dvec3& normal, const glm::dvec2& disk_sample, const double radius) const {
-  glm::dvec3 approx = p_entry +
-    disk_sample.x * glm::normalize(u) +
-    disk_sample.y * glm::normalize(v);
-
-  glm::dvec2 uv = world_to_uv(approx);
-  uv = glm::clamp(uv, glm::dvec2(0), glm::dvec2(1));
-  return uv_to_world(uv);
-}
-
 glm::dvec3 Quad::normal_at(const glm::dvec3& p) const {
   return normal; // Flat surface, same normal everywhere
 }

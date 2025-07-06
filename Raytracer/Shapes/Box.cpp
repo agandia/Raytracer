@@ -32,7 +32,20 @@ Box::Box(const glm::dvec3& corner_a, const glm::dvec3& corner_b, std::shared_ptr
 }
 
 bool Box::hit(const Ray& ray, Interval ray_t, HitRecord& rec) const {
-  return sides_bvh->hit(ray, ray_t, rec);
+  bool hit_side = sides_bvh->hit(ray, ray_t, rec);
+  if ( hit_side) rec.shape_ptr = this;
+  return hit_side;
+}
+
+bool Box::contains(const glm::dvec3& p) const {
+  const double eps = 1e-6;
+  return (p.x > bbox.x.min + eps && p.x < bbox.x.max - eps) &&
+    (p.y > bbox.y.min + eps && p.y < bbox.y.max - eps) &&
+    (p.z > bbox.z.min + eps && p.z < bbox.z.max - eps);
+}
+
+AABB Box::bounding_box() const {
+  return sides_bvh->bounding_box();
 }
 
 double Box::pdf_value(const glm::dvec3& origin, const glm::dvec3& direction) const {
@@ -43,7 +56,6 @@ double Box::pdf_value(const glm::dvec3& origin, const glm::dvec3& direction) con
   }
   return pdf;
 }
-
 
 glm::dvec3 Box::random(const glm::dvec3& origin) const {
   
@@ -58,9 +70,4 @@ glm::dvec3 Box::random(const glm::dvec3& origin) const {
   }
   // fallback, shouldn't happen
   return face_list[5]->random(origin);
-
-}
-
-AABB Box::bounding_box() const {
-  return sides_bvh->bounding_box();
 }

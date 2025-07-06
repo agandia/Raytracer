@@ -28,15 +28,12 @@ class Quad : public Hittable {
 
     virtual glm::dvec3 random(const glm::dvec3& origin) const override;
 
-    virtual glm::dvec3 map_exit_point(const glm::dvec3& p_entry, const glm::dvec3& normal, const glm::dvec2& disk_sample, const double radius) const override;
-
     virtual glm::dvec3 normal_at(const glm::dvec3& p) const override;
 
   protected:
     glm::dvec2 world_to_uv(const glm::dvec3& p) const;
 
     glm::dvec3 uv_to_world(const glm::dvec2& uv) const;
-
 
     glm::dvec3 Q; // origin of the quad
     glm::dvec3 u , v; // vectors spanning the edges of the quad

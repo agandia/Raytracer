@@ -22,6 +22,10 @@ Pyramid::Pyramid(const glm::dvec3& Q, const glm::dvec3& u, const glm::dvec3& v, 
   glm::dvec3 normal = glm::normalize(glm::cross(u, v));
   glm::dvec3 apex = center + height * normal;
 
+  b0_ = b0; b1_ = b1; b2_ = b2; b3_ = b3;
+  apex_ = apex;
+  base_n_ = -glm::normalize(glm::cross(u, v));
+
   auto side = std::make_shared<Triangle>(b0, b1 - b0, apex - b0, m);
   double area_s = side->surface_area(); 
   surface_areas.push_back(area_s);
@@ -52,11 +56,29 @@ Pyramid::Pyramid(const glm::dvec3& Q, const glm::dvec3& u, const glm::dvec3& v, 
 
   sides_bvh = std::make_shared<BVHNode>(face_list, 0, face_list.size());
   bbox = sides_bvh->bounding_box();
-
 }
 
 bool Pyramid::hit(const Ray& ray, Interval ray_t, HitRecord& rec) const {
-  return sides_bvh->hit(ray, ray_t, rec);
+  bool hit_side = sides_bvh->hit(ray, ray_t, rec);
+  if (hit_side) rec.shape_ptr = this;
+  return hit_side;
+}
+
+inline bool same_side(const glm::dvec3& p, const glm::dvec3& a, const glm::dvec3& b, const glm::dvec3& apex)
+{
+  glm::dvec3 n = glm::normalize(glm::cross(b - a, apex - a)); // outward
+  return glm::dot(n, p - a) <= 1e-6;
+}
+
+bool Pyramid::contains(const glm::dvec3& p) const
+{
+  // above base?
+  if (glm::dot(p - b0_, base_n_) > -1e-6) return false;
+
+  return same_side(p, b0_, b1_, apex_) &&
+    same_side(p, b1_, b2_, apex_) &&
+    same_side(p, b2_, b3_, apex_) &&
+    same_side(p, b3_, b0_, apex_);
 }
 
 AABB Pyramid::bounding_box() const {

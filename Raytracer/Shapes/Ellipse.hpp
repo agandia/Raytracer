@@ -46,25 +46,7 @@ public:
     return sample_point - origin;
   }
 
-  glm::dvec3 map_exit_point(const glm::dvec3& p_entry, const glm::dvec3& normal, const glm::dvec2& disk_sample, const double radius) const override {
-    // Step 1: Sample disk, remap to ellipse plane
-    glm::dvec3 offset = disk_sample.x * glm::normalize(u) * glm::length(u)
-      + disk_sample.y * glm::normalize(v) * glm::length(v);
-    glm::dvec3 approx = p_entry + offset;
-
-    // Step 2: Clamp to ellipse using implicit equation x^2/a^2 + y^2/b^2 <= 1
-    glm::dvec3 local = approx - Q;
-    double a = glm::dot(local, u) / glm::length2(u);
-    double b = glm::dot(local, v) / glm::length2(v);
-    double len_sq = a * a + b * b;
-
-    if (len_sq > 1.0) {
-      double scale = 1.0 / std::sqrt(len_sq);
-      a *= scale;
-      b *= scale;
-    }
-
-    return Q + a * u + b * v;
+  glm::dvec3 normal_at(const glm::dvec3& p) const {
+    return normal; // Flat surface, same normal everywhere
   }
-
 };

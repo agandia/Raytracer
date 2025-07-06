@@ -14,6 +14,9 @@ bool Translate::hit(const Ray& r, Interval t, HitRecord& rec) const {
   return true;
 }
 
+bool Translate::contains(const glm::dvec3& p) const {
+  return hittable->contains(p - offset);
+}
 
 RotateYAxis::RotateYAxis(std::shared_ptr<Hittable> object, double angle)
   : hittable(object) {
@@ -70,7 +73,14 @@ bool RotateYAxis::hit(const Ray& r, Interval ray_t, HitRecord& rec) const {
 
   rec.normal = glm::dvec3((cos_theta * rec.normal.x) + (sin_theta * rec.normal.z), rec.normal.y, (-sin_theta * rec.normal.x) + (cos_theta * rec.normal.z));
 
+  rec.shape_ptr = this;
+
   return true;
+}
+
+bool RotateYAxis::contains(const glm::dvec3& p) const {
+  glm::dvec3 local = inverse_rotate_y(p);
+  return hittable->contains(local);
 }
 
 glm::dvec3 RotateYAxis::rotate_y(const glm::dvec3& p) const {

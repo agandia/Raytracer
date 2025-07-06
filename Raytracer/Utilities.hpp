@@ -4,8 +4,25 @@
 #include "Interval.hpp"
 #include <cstdlib>
 #include <iostream>
+#include <random>
+#include <omp.h>
 #include <glm/glm.hpp> // vec3, dot, normalize, ...
 #include <glm/gtx/norm.hpp> // length2
+
+// Utility ---------------------------------------------------------------------
+inline double rnd()
+{
+  thread_local std::mt19937_64 rng(
+    2025 +
+#ifdef _OPENMP
+    omp_get_thread_num()
+#else
+    0
+#endif
+  );
+  thread_local std::uniform_real_distribution<double> uni(0.0, 1.0);
+  return uni(rng);
+}
 
 
 // Utility Functions

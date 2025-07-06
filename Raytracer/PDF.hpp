@@ -84,32 +84,3 @@ public:
 private:
   std::shared_ptr<PDF> p[2];
 };
-
-class SubsurfacePDF : public PDF {
-public:
-  SubsurfacePDF(const glm::dvec3& normal)
-    : w(normalize(normal)) {
-    build_orthonormal_basis(w);
-  }
-
-  virtual double value(const glm::dvec3& direction) const override {
-    // Cosine-weighted pdf: cos(theta) / pi
-    double cosine = glm::dot(normalize(direction), w);
-    return (cosine <= 0) ? 0 : cosine / pi;
-  }
-  virtual glm::dvec3 generate() const override {
-    glm::dvec3 local_dir = random_cosine_direction(); // hemisphere around Z+
-    return local_dir.x * u + local_dir.y * v + local_dir.z * w;
-  }
-
-private:
-  glm::dvec3 u, v, w;
-
-  void build_orthonormal_basis(const glm::dvec3& n) {
-    w = normalize(n);
-    glm::dvec3 a = (std::abs(w.x) > 0.9) ? glm::dvec3(0, 1, 0) : glm::dvec3(1, 0, 0);
-    v = normalize(glm::cross(w, a));
-    u = glm::cross(v, w);
-  }
-};
-

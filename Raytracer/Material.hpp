@@ -2,7 +2,6 @@
 
 #include "Hittable.hpp"
 #include "TextureWrapper.hpp"
-#include "BSSRDFSampler.hpp"
 #include "Ray.hpp"
 #include "Utilities.hpp"
 #include "PDF.hpp"
@@ -149,75 +148,109 @@ private:
 
 class SubsurfaceMaterial : public Material {
 public:
-  std::shared_ptr<ITexture> albedo;
-  double index_of_refraction;
-  double scattering_coefficient;  // σ_s
-  double absorption_coefficient;  // σ_a
-  double g;  // asymmetry parameter for phase function (e.g. Henyey-Greenstein)
-  std::shared_ptr<BSSRDFSampler> bssrdf;
-
-  SubsurfaceMaterial(const glm::vec3& albedo, double ior, double sigma_s, double sigma_a, double g_, std::shared_ptr<BSSRDFSampler> bssrdf_sampler)
-    : albedo(std::make_shared<SolidColorTexture>(albedo)), index_of_refraction(ior), scattering_coefficient(sigma_s), absorption_coefficient(sigma_a), g(g_), bssrdf(bssrdf_sampler)
-    {}
-
-  bool scatter(const Ray& r_in, const HitRecord& rec, ScatterRecord& srec) const
+  SubsurfaceMaterial(glm::dvec3 sigma_s, glm::dvec3 sigma_a, double g, double eta)
+    : shape(shape), sigma_s(sigma_s), sigma_a(sigma_a), g(g), eta(eta)
   {
-    // Step 1: Sample exit radius and generate disk sample
-    double theta = 2 * pi * random_double();
-    double r = bssrdf->sample_radius(random_double());
-    glm::dvec2 disk = r * glm::dvec2(std::cos(theta), std::sin(theta));
-
-
-    // Step 2: Map the exit point on the surface
-    glm::dvec3 p_exit = rec.shape_ptr->map_exit_point(rec.p, rec.normal, disk, r);
-    glm::dvec3 normal_exit = rec.shape_ptr->normal_at(p_exit);
-
-    // Step 3: Compute attenuation based on distance
-    double attenuation_strength = std::max(bssrdf->diffuse_profile(glm::length(p_exit - rec.p)), 1e-4);
-
-    glm::dvec3 attenuation = albedo->color_value(rec.u, rec.v, rec.p) * (double)attenuation_strength * 1000.0;
-    if (glm::length(attenuation) < 1e-6) return false; // discard very low contribution
-
-    // Step 4: Generate cosine-weighted scattered direction from exit point
-    auto pdf = std::make_shared<SubsurfacePDF>(normal_exit);
-    glm::dvec3 out_dir = pdf->generate();
-
-    srec.skip_pdf = true;
-    srec.attenuation = attenuation;
-    srec.pdf_ptr = pdf;
-    srec.skip_pdf_ray = Ray(p_exit, out_dir, r_in.time());
-
-    return true;
   }
 
-  double scattering_pdf(const Ray& r_in, const HitRecord& rec, const Ray& scattered) const override {
-    // Build ONB for surface normal
-    OrthoNormalBasis onb(rec.normal);
+  /* ---------- main entry ---------- */
+  bool scatter(const Ray& r_in, const HitRecord& rec, ScatterRecord& srec) const override
+  {
+    /* 1. Fresnel split (same as before) ----------------------------- */
+    glm::dvec3 wo = glm::normalize(r_in.direction());
+    glm::dvec3 n = rec.normal;
+    double cos_i = std::clamp(glm::dot(-wo, n), 0.0, 1.0);
+    double eta_i = rec.front_face ? 1.0 : eta;
+    double eta_t = rec.front_face ? eta : 1.0;
+    double eta_rel = eta_i / eta_t;
+    const Hittable* shape = rec.shape_ptr;
 
-    // Vector from entry point to scattered origin
-    glm::dvec3 exit_offset = scattered.origin() - rec.p;
+    double R0 = (eta_rel - 1) * (eta_rel - 1) / ((eta_rel + 1) * (eta_rel + 1));
+    double Fr = R0 + (1 - R0) * std::pow(1 - cos_i, 5);
+    Fr *= 0.08;                                   // damp shiny look
 
-    // Project exit_offset into tangent plane (u,v)
-    double x = glm::dot(exit_offset, onb.u());
-    double y = glm::dot(exit_offset, onb.v());
+    if (rnd() < Fr) {                             // reflect
+      glm::dvec3 refl = glm::reflect(wo, n);
+      srec.skip_pdf_ray = Ray(rec.p, refl);
+      srec.skip_pdf = true;
+      srec.attenuation = glm::vec3(1);
+      return true;
+    }
 
-    double r = std::sqrt(x * x + y * y);
+    /* 2. Refract into the medium ----------------------------------- */
+    glm::dvec3 wi = glm::refract(wo, n, eta_rel);
+    if (near_zero(wi)) return false;              // TIR unlikely
 
-    // Calculate radius PDF
-    double radius_pdf = bssrdf->pdf_value(r);
+    /* 3. Random‑walk inside 'shape' -------------------------------- */
+    glm::dvec3 Tr(1);
+    glm::dvec3 pos = rec.p + 1e-4 * wi;
+    glm::dvec3 dir = wi;
 
-    // Cosine PDF for outgoing direction (assuming cosine-weighted)
-    double cosine = glm::dot(glm::normalize(scattered.direction()), rec.normal);
-    if (cosine <= 0) return 0.0;
+    for (int bounce = 0; bounce < 512; ++bounce) {
+      glm::dvec3 sigma_t = sigma_s + sigma_a;
+      double sum_sigma = sigma_t.x + sigma_t.y + sigma_t.z;
+      double xi = rnd() * sum_sigma;
+      int    ch = (xi < sigma_t.x) ? 0 : (xi < sigma_t.x + sigma_t.y ? 1 : 2);
+      double sigma_t_ch = (ch == 0 ? sigma_t.x : (ch == 1 ? sigma_t.y : sigma_t.z));
 
-    double cosine_pdf = cosine / pi;
+      double t = -std::log(1 - rnd()) / sigma_t_ch;
+      pos += dir * t;
 
-    // Total PDF is product of radius sampling and directional sampling
-    return radius_pdf * cosine_pdf;
+      /* exit test for arbitrary shape */
+      if (!shape->contains(pos)) {
+        // push the point slightly back to the boundary normal
+        Ray exit_ray(pos, glm::normalize(pos - rec.p)); // crude normal
+        HitRecord exit_rec;
+        shape->hit(exit_ray, Interval(1e-4, infinity), exit_rec);
+
+        glm::dvec3 out = sample_hg(g, exit_rec.normal);
+        srec.skip_pdf_ray = Ray(pos, out);
+        srec.skip_pdf = true;
+        srec.attenuation = glm::vec3(Tr);
+        return true;
+      }
+
+      /* absorption & single‑scatter albedo */
+      glm::dvec3 att = glm::exp(-sigma_a * t);
+      Tr *= att * (sigma_s / sigma_t);
+
+      /* Russian roulette */
+      if (bounce > 8) {
+        double q = std::max({ Tr.x,Tr.y,Tr.z });
+        if (rnd() > q) return false;
+        Tr /= q;
+      }
+      /* new direction */
+      dir = sample_hg(g, dir);
+    }
+    return false; // path exceeded bounce budget
   }
 
+private:
+  // Henyey–Greenstein Phase Function -------------------------------------------
+  glm::dvec3 sample_hg(double g, glm::dvec3& wo) const {
+    double xi = rnd();
+    double cos_theta;
+    if (std::abs(g) < 1e-3) cos_theta = 1 - 2 * xi;
+    else {
+      double sq = (1 - g * g) / (1 - g + 2 * g * xi);
+      cos_theta = (1 + g * g - sq * sq) / (2 * g);
+    }
+    double sin_theta = std::sqrt(std::max(0.0, 1 - cos_theta * cos_theta));
+    double phi = 2 * pi * rnd();
 
-  glm::vec3 emitted(const Ray& r_in, const HitRecord& rec, double u, double v, const glm::dvec3& p) const override {
-    return glm::vec3(0);
+    // build local frame around wo
+    glm::dvec3 w = glm::normalize(wo);
+    glm::dvec3 u = glm::normalize(glm::cross((std::abs(w.x) > .1 ? glm::dvec3(0, 1, 0)
+      : glm::dvec3(1, 0, 0)), w));
+    glm::dvec3 v = glm::cross(w, u);
+
+    return glm::normalize(cos_theta * w +
+      sin_theta * std::cos(phi) * u +
+      sin_theta * std::sin(phi) * v);
   }
+
+  std::shared_ptr<Hittable> shape;
+  glm::dvec3 sigma_s, sigma_a;
+  double g, eta;
 };

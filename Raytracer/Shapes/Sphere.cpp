@@ -36,6 +36,11 @@ bool Sphere::hit(const Ray& ray, Interval interval, HitRecord& rec) const {
     return true;
 }
 
+// This doesn't work for dynamic spheres
+bool Sphere::contains(const glm::dvec3& p) const {
+  return glm::length2(p - center.origin()) < radius * radius;
+}
+
 void Sphere::get_sphere_uv(const glm::dvec3& p, double& u, double& v) {
   // p: a given point on the sphere of radius one, centered at the origin.
   // u: returned value [0,1] of angle around the Y axis from X=-1.
@@ -70,7 +75,7 @@ double Sphere::pdf_value(const glm::dvec3& origin, const glm::dvec3& direction) 
   if (!this->hit(Ray(origin, direction), Interval(0.001, infinity), rec))
     return 0;
 
-  double dist_squared = glm::length2(center.at(0) - origin);
+  double dist_squared = glm::length2(center.origin() - origin);
   double cos_theta_max = std::sqrt(1 - radius * radius / dist_squared);
   double solid_angle = 2 * pi * (1 - cos_theta_max);
 
@@ -84,27 +89,6 @@ glm::dvec3 Sphere::random(const glm::dvec3& origin) const {
   return basis.transform(random_to_sphere(radius, distance_squared));
 }
 
-glm::dvec3 Sphere::map_exit_point(const glm::dvec3& p_entry, const glm::dvec3& normal, const glm::dvec2& disk_sample, const double sample_radius) const {
-  OrthoNormalBasis onb(normal);
-  // Offset vector in tangent plane scaled by sample_radius (the radius from diffusion profile)
-  glm::dvec3 offset = sample_radius * (disk_sample.x * onb.u() + disk_sample.y * onb.v());
-
-  // Approximate local point on tangent plane
-  glm::dvec3 tangent_point = p_entry + offset;
-
-  // Direction from center to tangent_point
-  glm::dvec3 dir = glm::normalize(tangent_point - center.at(0));
-
-  // Exit point on sphere surface at radius along this direction
-  glm::dvec3 p_exit = center.at(0) + 1.004 *(radius * dir);
-
-  // Slightly offset p_exit along normal to avoid self-intersection
-  //p_exit += normal * 1e-4;
-
-  return p_exit;
-}
-
-
 glm::dvec3 Sphere::normal_at(const glm::dvec3& p) const {
-  return glm::normalize(p - center.at(0));
+  return glm::normalize(p - center.origin());
 }

@@ -26,15 +26,17 @@ class HitRecord {
         front_face = glm::dot(r.direction(), outward_normal) < 0;
         normal = front_face ? outward_normal : -outward_normal;
     }
-
 };
 
 class Hittable {
   public:
-    // Check if the ray intersects with the object
-    virtual bool hit(const Ray& r, Interval t, HitRecord& rec) const = 0;
     // Virtual destructor for proper cleanup of derived classes
     virtual ~Hittable() = default;
+
+    // Check if the ray intersects with the object
+    virtual bool hit(const Ray& r, Interval t, HitRecord& rec) const = 0;
+
+    virtual bool contains(const glm::dvec3& /*p*/) const { return false; }
 
     virtual AABB bounding_box() const = 0; ///< Get the bounding box of the object
 
@@ -44,12 +46,6 @@ class Hittable {
 
     virtual glm::dvec3  random(const glm::dvec3& origin) const {
       return glm::dvec3(1, 0, 0);
-    }
-
-    virtual glm::dvec3 map_exit_point(const glm::dvec3& p_entry, const glm::dvec3& normal, const glm::dvec2& disk_sample, const double radius) const {
-      //Default fallback: naive tangent plane offset
-      OrthoNormalBasis onb(normal);
-      return p_entry + disk_sample.x * onb.u() + disk_sample.y * onb.v();
     }
 
     virtual glm::dvec3 normal_at(const glm::dvec3& p) const {
@@ -63,11 +59,13 @@ class Translate : public Hittable {
         : hittable(hittable), offset(offset) {
       bbox = hittable->bounding_box() + offset;
     }
-  
-    inline AABB bounding_box() const override { return bbox; }
-  
+
     bool hit(const Ray& r, Interval t, HitRecord& rec) const override;
 
+    bool contains(const glm::dvec3& p) const override;
+
+    inline AABB bounding_box() const override { return bbox; }
+  
   private:
     std::shared_ptr<Hittable> hittable; ///< Pointer to the hittable object
     glm::dvec3 offset;              ///< Offset for translation
@@ -79,6 +77,7 @@ class RotateYAxis : public Hittable {
 public:
   RotateYAxis(std::shared_ptr<Hittable> object, double angle);
   bool hit(const Ray& r, Interval ray_t, HitRecord& rec) const override;
+  bool contains(const glm::dvec3& p) const override;
   inline AABB bounding_box() const override { return bbox; }
   double pdf_value(const glm::dvec3& origin, const glm::dvec3& direction) const override;
   glm::dvec3 random(const glm::dvec3& origin) const override;
