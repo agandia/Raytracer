@@ -16,8 +16,8 @@ Cylindroid::Cylindroid(const glm::dvec3& Q, const glm::dvec3& u, const glm::dvec
   b_v_ = v;
 
   // Base and top
-  auto base = std::make_shared<Ellipse>(Q, u, v, m);
-  auto top = std::make_shared<Ellipse>(Q_top, u, v, m);
+  auto base = std::make_shared<Ellipse>(Q, u, v , m);
+  auto top = std::make_shared<Ellipse>(Q_top, u , v , m);
   face_list.push_back(base);
   face_list.push_back(top);
   surface_areas.push_back(base->surface_area());

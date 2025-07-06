@@ -5,7 +5,7 @@
 class Ellipse : public Quad {
 public:
   Ellipse(const glm::dvec3& center, const glm::dvec3& side_A, const glm::dvec3& side_B, std::shared_ptr<Material> m)
-    : Quad(center, side_A, side_B, m)
+    : Quad(center - side_A - side_B, 2.0 * side_A, 2.0 * side_B, m)
   {
   }
 
@@ -18,11 +18,14 @@ public:
   }
 
   virtual bool is_interior(double a, double b, HitRecord& rec) const override {
-    if ((a * a + b * b) > 1)
+    double x = a - 0.5;
+    double y = b - 0.5;
+    
+    if ((x * x + y * y) > 0.25)
       return false;
 
-    rec.u = a / 2 + 0.5;
-    rec.v = b / 2 + 0.5;
+    rec.u = a;
+    rec.v = b;
     return true;
   }
 

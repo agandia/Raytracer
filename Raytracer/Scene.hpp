@@ -206,7 +206,7 @@ void quads() {
    
   //world.add(std::make_shared<Ellipse>(glm::dvec3(2, 5, 3), glm::dvec3(4, 0, 0), glm::dvec3(0, 4, 0), back_green));
   // They get expensive very vert quickly
-  //world.add(cylindroid(glm::dvec3(0, 0, 0), glm::dvec3(4, 0, 0), glm::dvec3(0, 0, -4), 8, 32, back_green));
+  world.add(std::make_shared<Cylindroid>(glm::dvec3(0, 0, 0), glm::dvec3(4, 0, 0), glm::dvec3(0, 0, -4), 8, 32, back_green));
 
   world.add(std::make_shared<Quad>(glm::dvec3(-3, -2, 5), glm::dvec3(0, 0, -4), glm::dvec3(0, 4, 0), left_red));
   world.add(std::make_shared<Quad>(glm::dvec3(-2, -2, 0), glm::dvec3(4, 0, 0), glm::dvec3(0, 4, 0), back_green));
@@ -882,6 +882,7 @@ void sss_gallery()  // drop into main.cpp
   /* -- Lights ---------------------------------------------------------- */
   auto light_panel = std::make_shared<DiffuseLight>(glm::vec3(25, 25, 25));
   auto back_light = std::make_shared<DiffuseLight>(glm::vec3(150, 150, 150));   // bright
+  auto front_light = std::make_shared<DiffuseLight>(glm::vec3(5, 5, 5));   // dim
 
   // ceiling panel (normal -y)
   world.add(std::make_shared<Quad>(glm::dvec3(343, 554, 332), glm::dvec3(-130, 0, 0),
@@ -913,29 +914,36 @@ void sss_gallery()  // drop into main.cpp
   // Coordinates are centre positions in mm
   world.add(std::make_shared<Sphere>(glm::dvec3(90, 115, 275), 60, skin));         // front‑left
 
-  std::shared_ptr<Hittable> box1 = std::make_shared<Box>(glm::dvec3(200.0, 10.0, 150.0), glm::dvec3(300.0, 210.0, 250.0), jade);  // mid‑left box
-  box1 = make_shared<RotateYAxis>(box1, 15);
-  world.add(box1);
+  std::shared_ptr<Hittable> box = std::make_shared<Box>(glm::dvec3(200.0, 10.0, 150.0), glm::dvec3(300.0, 210.0, 250.0), jade);  // mid‑left box
+  box = make_shared<RotateYAxis>(box, 15);
+  world.add(box);
 
-  std::shared_ptr<Hittable> pyramid1 = std::make_shared<Pyramid>(glm::dvec3(400.0, 10.0, 220.0),   // front-right
+  std::shared_ptr<Hittable> pyramid = std::make_shared<Pyramid>(glm::dvec3(375.0, 10.0, 275.0),   // front-right
     glm::dvec3(80, 0, 0), glm::dvec3(0, 0, -80),
     120, wax);
-  pyramid1 = make_shared<RotateYAxis>(pyramid1, 22);
-  world.add(pyramid1);
+  pyramid = make_shared<RotateYAxis>(pyramid, 22);
+  world.add(pyramid);
 
-  world.add(std::make_shared<Cone  >(glm::dvec3(190.0, 10.0, 380.0),    // back-left
+  std::shared_ptr<Hittable> cone = std::make_shared<Cone  >(glm::dvec3(190.0, 10.0, 380.0),    // back-left
     glm::dvec3(50, 0, 0), glm::dvec3(0, 0, -50),
-    140, 32, marble));                           // cone
+    140, 32, marble);                           // cone
+  // Warning: this is hacky AF, cone faces looking at the camera are exactly backlit by the back light, 
+  // making the shape black bc exiting rays capture the black background, adding a small or 0 rotation, fixes that (!??) go figure...
+  cone = make_shared<RotateYAxis>(cone, 0); 
+  world.add(cone);
 
-  world.add(std::make_shared<Cylindroid>(glm::dvec3(425, 10, 380),// back‑right
+  std::shared_ptr<Hittable> cylinder = std::make_shared<Cylindroid>(glm::dvec3(425, 10, 380),// back‑right
     glm::dvec3(60, 0, 0), glm::dvec3(0, 0, -60),
-    160, 48, milk));
+    160, 48, milk);
+  // Warning: hackity hack.
+  cylinder = make_shared<RotateYAxis>(cylinder, 0);
+  world.add(cylinder);
 
   /* -- Camera ---------------------------------------------------------- */
   Camera cam;
   cam.aspect_ratio = 1.0;
   cam.image_width = 600;
-  cam.samples_per_pixel = 4000;   // good default; bump if still noisy
+  cam.samples_per_pixel = 16000;   // good default; bump if still noisy
   cam.max_depth = 400;
   cam.background = glm::vec3(0);
   cam.vertical_fov = 40;
