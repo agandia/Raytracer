@@ -1,7 +1,7 @@
 # Raytracer
 ![Complex scene rendered with this code](https://github.com/agandia/Raytracer/blob/master/full_5000spp_50d.jpg)
-
-![BSSRDF using random walk](https://github.com/agandia/Raytracer/blob/master/SSS.jpg)
+![BSSRDF on spheres](https://github.com/agandia/Raytracer/blob/master/SSS.jpg)
+![Random Walk SSS Gallery](https://github.com/agandia/Raytracer/blob/master/random_walk_SSS_gallery_16kspp_400d.jpg)
 
 The foundation for the pathtracer is just a tag-along of this resource https://raytracing.github.io/
 
@@ -10,8 +10,6 @@ Previously I had implemented Subsurface Scattering with the Dipole Diffusion Met
 This work implements subsurface scattering based on the random-walk approach described in “Separable Subsurface Scattering” by Kulla, Conty Estevez,
 and Drobot (Sony Pictures Imageworks, SIGGRAPH 2017), combining Fresnel transmission, volumetric scattering via the Radiative Transfer Equation,
 Henyey–Greenstein sampling, and exponential free path sampling.
-
-
 
 ##Build and Run this program
 
