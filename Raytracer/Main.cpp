@@ -2,7 +2,7 @@
 
 //#include <omp.h>
 int main() {
-switch (14) {
+switch (0) {
   case 1: bouncing_spheres();  break;
   case 2: checkered_spheres(); break;
   case 3: earth(); break;
@@ -17,7 +17,7 @@ switch (14) {
   case 12: prob_dens_func_test(); break;
   case 13: dipole_diffusion_profile_test(); break; // actually random walk
   case 14: sss_gallery(); break;
-  default: boosted_scene(800, 5000, 50); break;
-  //default: boosted_scene(800, 100, 50); break;
+  //default: boosted_scene(800, 5000, 50); break;
+  default: boosted_scene(800, 10000, 400); break;
   }
 }

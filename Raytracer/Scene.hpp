@@ -474,7 +474,6 @@ void final_scene(int image_width, int samples_per_pixel, int max_depth) {
 void boosted_scene(int image_width, int samples_per_pixel, int max_depth) {
   HitPool world;
   HitPool lights;
-  std::shared_ptr<Material> empty_material = nullptr;
 
   // Ground using grid of boxes
   HitPool boxes1;
@@ -491,6 +490,7 @@ void boosted_scene(int image_width, int samples_per_pixel, int max_depth) {
   }
   world.add(std::make_shared<BVHNode>(boxes1));
 
+  // Textures and materials
   auto noise_texture = std::make_shared<NoiseTexture>(0.2);
   auto noise = std::make_shared<Lambertian>(noise_texture); // x
   auto earth_texture = std::make_shared<ImageTexture>("earthmap.jpg");
@@ -509,103 +509,72 @@ void boosted_scene(int image_width, int samples_per_pixel, int max_depth) {
   auto cyan = std::make_shared<Lambertian>(glm::vec3(0.2, 0.8, 0.9)); // x
   auto magenta = std::make_shared<Lambertian>(glm::vec3(0.9, 0.2, 0.7)); // x
 
+  // Subsurface materials
+  auto wax = std::make_shared<SubsurfaceMaterial>(glm::dvec3(1.2, 1.0, 0.8), glm::dvec3(0.002, 0.004, 0.01), 0.0, 1.44);
+  auto milk = std::make_shared<SubsurfaceMaterial>(glm::dvec3(2.5), glm::dvec3(0.01), 0.0, 1.3);
+  auto jade = std::make_shared<SubsurfaceMaterial>(glm::dvec3(0.7, 0.9, 0.5), glm::dvec3(0.001, 0.002, 0.0015), 0.0, 1.5);
+  auto marble = std::make_shared<SubsurfaceMaterial>(glm::dvec3(2.19, 2.62, 3.0), glm::dvec3(0.0021, 0.0041, 0.0071), 0.0, 1.5); 
+  auto skin = std::make_shared<SubsurfaceMaterial>(glm::dvec3(0.74, 0.88, 1.01), glm::dvec3(0.032, 0.17, 0.48), 0.9, 1.40);
+
   auto empty_mat = std::shared_ptr<Material>();
 
   // Overhead light
   auto light = std::make_shared<DiffuseLight>(glm::vec3(7, 7, 7));
-  auto ceiling_light = std::make_shared<Quad>(
-    glm::dvec3(123, 554, 147), glm::dvec3(300, 0, 0), glm::dvec3(0, 0, 265), light
-  );
+  auto pin_light = std::make_shared<DiffuseLight>(glm::vec3(15, 15, 15));
+  auto ceiling_light = std::make_shared<Quad>(glm::dvec3(123, 554, 147), glm::dvec3(300, 0, 0), glm::dvec3(0, 0, 265), light);
   world.add(ceiling_light);
-  lights.add(std::make_shared<Quad>(
-    glm::dvec3(123, 554, 147), glm::dvec3(300, 0, 0), glm::dvec3(0, 0, 265), empty_material
-  ));
+  lights.add(std::make_shared<Quad>(glm::dvec3(123, 554, 147), glm::dvec3(300, 0, 0), glm::dvec3(0, 0, 265), empty_mat));
+  // Back light to enhance sss qualities
+  auto back_light = std::make_shared<Sphere>(glm::dvec3(450, 220, 0), 25, pin_light);
+  world.add(back_light);
+  lights.add(std::make_shared<Sphere>(glm::dvec3(500, 150, 0), 25, empty_mat));
 
-  // Textured Earth sphere
-  auto earth_sphere = std::make_shared<Sphere>(glm::dvec3(400, 200, 400), 100, earth);
-  world.add(earth_sphere);
-
-  // Moving bronce ball
-  auto center1 = glm::dvec3(400, 400, 200);
-  auto center2 = center1 + glm::dvec3(30, 0, 0);
-  world.add(std::make_shared<Sphere>(center1, center2, 50, bronze));
-
-  // Glass sphere
-  auto glass_sphere = std::make_shared<Sphere>(glm::dvec3(260, 150, 45), 50, glass);
-  world.add(glass_sphere);
-  //glass_sphere = std::make_shared<Sphere>(glm::dvec3(260, 150, 45), 50, empty_material);
-  //lights.add(glass_sphere);
-
-  // Metallic sphere
-  world.add(std::make_shared<Sphere>(glm::dvec3(0, 150, 145), 50, bronze_metal));
-  //lights.add(std::make_shared<Sphere>(glm::dvec3(0, 150, 145), 50, empty_material));
+  // Add Scene shapes
+  world.add(std::make_shared<Sphere>(glm::dvec3(400, 200, 400), 100, earth)); // Textured Earth sphere
+  world.add(std::make_shared<Sphere>(glm::dvec3(400, 400, 200), glm::dvec3(430, 400, 200), 50, bronze)); // Moving bronce ball with 2 centers (c1, c2, r, mat)
+  world.add(std::make_shared<Sphere>(glm::dvec3(260, 150, 45), 50, glass)); // Glass Sphere
+  world.add(std::make_shared<Sphere>(glm::dvec3(0, 150, 145), 50, bronze_metal)); // Bronce Metallic Sphere
+  world.add(std::make_shared<Sphere>(glm::dvec3(220, 280, 300), 80, porcelain)); // Center sphere with a porcelain like lambertian
+  world.add(std::make_shared<Sphere>(glm::dvec3(-150, 330, 350), 40, noise)); // Sphere using Noise texture
 
   // Glass sphere with blue smoke inside
   auto foggy_boundary = std::make_shared<Sphere>(glm::dvec3(360, 150, 145), 70, glass);
   world.add(foggy_boundary);
-  world.add(std::make_shared<ConstantMedium>(foggy_boundary, 0.2, glm::vec3(0.2, 0.4, 0.9)));
-
-  // Center noise sphere
-  world.add(std::make_shared<Sphere>(glm::dvec3(220, 280, 300), 80, porcelain));
-
-  // Right noise sphere
-  world.add(std::make_shared<Sphere>(glm::dvec3(-150, 330, 350), 40, noise));
+  world.add(std::make_shared<ConstantMedium>(foggy_boundary, 0.2, glm::vec3(0.2, 0.4, 0.9))); // ConstantMedium(center, density, isotropic_color)
 
   // Particle cloud
   HitPool boxes2;
   for (int j = 0; j < 1000; ++j) {
     boxes2.add(std::make_shared<Sphere>(random(0, 165), 10, white));
   }
-  world.add(std::make_shared<Translate>(
-    std::make_shared<RotateYAxis>(std::make_shared<BVHNode>(boxes2), 15),
-    glm::dvec3(-100, 270, 395)
-  ));
+  world.add(std::make_shared<Translate>(std::make_shared<RotateYAxis>(std::make_shared<BVHNode>(boxes2), 15), glm::dvec3(-100, 270, 395)));
 
-  // Rotated metal pyramid
-  HitPool pyramids;
-  pyramids.add(std::make_shared<Pyramid>(glm::dvec3(-170, 180, 375), glm::dvec3(60, 0, 0), glm::dvec3(0, 0, -60), 80, blue_frost)); // !! WARNING !! might render poorly
-  world.add(std::make_shared<RotateYAxis>(std::make_shared<BVHNode>(pyramids), 15));
+  // Pyramid using isotropic blue frost
+  auto pyramid = std::make_shared<Pyramid>(glm::dvec3(-270, 180, 375), glm::dvec3(60, 0, 0), glm::dvec3(0, 0, -60), 80, blue_frost);
+  world.add(std::make_shared<RotateYAxis>(pyramid, 15));
   
-  //HitPool pyram_light;
-  //pyram_light.add(std::make_shared<Pyramid>(glm::dvec3(0, 0, 0), glm::dvec3(60, 0, 0), glm::dvec3(0, 0, -60), 80, empty_material));
-  //lights.add(std::make_shared<Translate>(std::make_shared<RotateYAxis>(std::make_shared<BVHNode>(pyram_light), 15), glm::dvec3(-150, 220, 445)));
+  world.add(std::make_shared<Pyramid>(glm::dvec3(270, 354, 300), glm::dvec3(60, 0, 0), glm::dvec3(0, 0, -60), 100.0, glass)); // Glass Pyramid (Origin, u, v, height, mat)
 
-  // Glass pyramid
-  glm::dvec3 base_origin = glm::dvec3(270, 354, 300);
-  glm::dvec3 u = glm::dvec3(60, 0, 0);
-  glm::dvec3 v = glm::dvec3(0, 0, -60);
-  double height = 100.0;
-  world.add(std::make_shared<Pyramid>(base_origin, u, v, height, glass));
-  //lights.add(std::make_shared<Pyramid>(base_origin, u, v, height, empty_material));
-
-  // Cone: metal and glass
-  auto cone_pos = glm::dvec3(0, 90, 440);
-  world.add(std::make_shared<Cone>(cone_pos, glm::dvec3(30, 90, 0), glm::dvec3(0, 0, 30), 80, 32, brushed_metal));
-  //lights.add(std::make_shared<Cone>(cone_pos, glm::dvec3(30, 90, 0), glm::dvec3(0, 0, 30), 80, 32, empty_material));
+  auto sss_cone = std::make_shared<Cone>(glm::dvec3(450, 150, -190), glm::dvec3(30, 0, 0), glm::dvec3(0, 0, -30), 80, 32, milk);
+  world.add(sss_cone);
 
   world.add(std::make_shared<Cone>(glm::dvec3(0, 550, 250), glm::dvec3(-30, 0, 0), glm::dvec3(0, 0, -30), 80, 32, red));
-  //lights.add(std::make_shared<Cone>(glm::dvec3(-460, 90, 250), glm::dvec3(30, 0, 0), glm::dvec3(0, 0, 30), 80, 32, empty_material));
 
   // Cylindroid: asphalt and charcoal
-  auto cyl_pos = glm::dvec3(100, 50, 100);
-  world.add(std::make_shared<Cylindroid>(cyl_pos, glm::dvec3(20, 0, 0), glm::dvec3(0, 0, -20), 80, 16, asphalt));
-  world.add(std::make_shared<Cylindroid>(cyl_pos + glm::dvec3(50, 0, 0), glm::dvec3(20, 0, 0), glm::dvec3(0, 0, -20), 80, 16, charcoal_metal));
+  world.add(std::make_shared<Cylindroid>(glm::dvec3(100, 50, 100), glm::dvec3(20, 0, 0), glm::dvec3(0, 0, -20), 80, 16, asphalt));
+  world.add(std::make_shared<Cylindroid>(glm::dvec3(150, 50, 100), glm::dvec3(20, 0, 0), glm::dvec3(0, 0, -20), 80, 16, charcoal_metal));
 
   // Interesting 2D shapes with colorful Lambertian materials
-  
-  // Ellipse
-  world.add(std::make_shared<Ellipse>(
-    glm::dvec3(140, 70, 350),             // center
-    glm::dvec3(15, 0, 0),                 // u
-    glm::dvec3(0, 25, 0),                 // v
-    cyan
-  ));
+  world.add(std::make_shared<Ellipse>(glm::dvec3(140, 70, 350), glm::dvec3(15, 0, 0), glm::dvec3(0, 25, 0),  cyan)); // Ellipse
+  world.add(std::make_shared<Triangle>(glm::dvec3(210, 70, 360), glm::dvec3(30, 0, 10), glm::dvec3(15, 40, 0), magenta)); // Triangle corners as (A, B-A, C-A) or (A, u, v)
 
-  // Triangle
-  glm::dvec3 A(210, 70, 360);
-  glm::dvec3 B(240, 70, 370);
-  glm::dvec3 C(225, 110, 360);
-  world.add(std::make_shared<Triangle>(A, B - A, C - A, magenta));
+  // Fog box above
+  auto fog_box = std::make_shared<Box>(glm::dvec3(-1000, 500, -1000), glm::dvec3(1000, 550, 1000), std::make_shared<Isotropic>(glm::vec3(0.7, 0.7, 0.8)));
+  world.add(std::make_shared<ConstantMedium>(fog_box, 0.01, glm::vec3(1.0)));
+
+  //std::shared_ptr<Hittable> box = std::make_shared<Box>(glm::dvec3(400.0, 100.0, -230.0), glm::dvec3(450.0, 200.0, -180.0), jade);  // mid‑left box
+  //box = make_shared<RotateYAxis>(box, 1);
+  //world.add(box);
 
   // Camera
   Camera cam;
@@ -614,8 +583,8 @@ void boosted_scene(int image_width, int samples_per_pixel, int max_depth) {
   cam.samples_per_pixel = samples_per_pixel;
   cam.max_depth = max_depth;
   cam.background = glm::vec3(0, 0, 0);
-  cam.vertical_fov = 40;
-  cam.look_from = glm::dvec3(478, 278, -600);
+  cam.vertical_fov = 45;
+  cam.look_from = glm::dvec3(478, 278, -720);
   cam.look_at = glm::dvec3(278, 278, 0);
   cam.view_up = glm::dvec3(0, 1, 0);
   cam.defocus_angle = 0;
@@ -881,7 +850,7 @@ void sss_gallery()  // drop into main.cpp
 
   /* -- Lights ---------------------------------------------------------- */
   auto light_panel = std::make_shared<DiffuseLight>(glm::vec3(25, 25, 25));
-  auto back_light = std::make_shared<DiffuseLight>(glm::vec3(150, 150, 150));   // bright
+  auto back_light = std::make_shared<DiffuseLight>(glm::vec3(15, 15, 15));   // bright
   auto front_light = std::make_shared<DiffuseLight>(glm::vec3(5, 5, 5));   // dim
 
   // ceiling panel (normal -y)
@@ -891,8 +860,8 @@ void sss_gallery()  // drop into main.cpp
     glm::dvec3(0, 0, -105), nullptr));
 
   // back sphere light
-  world.add(std::make_shared<Sphere>(glm::dvec3(278, 278, 460), 40, back_light));
-  lights.add(std::make_shared<Sphere>(glm::dvec3(278, 278, 460), 40, nullptr));
+  world.add(std::make_shared<Sphere>(glm::dvec3(278, 278, 520), 20, back_light));
+  lights.add(std::make_shared<Sphere>(glm::dvec3(278, 278, 520), 20, nullptr));
 
   /* -- Subsurface presets --------------------------------------------- */
   auto wax = std::make_shared<SubsurfaceMaterial>(
@@ -943,7 +912,7 @@ void sss_gallery()  // drop into main.cpp
   Camera cam;
   cam.aspect_ratio = 1.0;
   cam.image_width = 600;
-  cam.samples_per_pixel = 16000;   // good default; bump if still noisy
+  cam.samples_per_pixel = 160;   // good default; bump if still noisy
   cam.max_depth = 400;
   cam.background = glm::vec3(0);
   cam.vertical_fov = 40;

@@ -13,7 +13,7 @@ public:
   SolidColorTexture(const glm::dvec3& albedo) : albedo_(albedo) {}
   SolidColorTexture(double r, double g, double b) : SolidColorTexture(glm::dvec3(r, g, b)) {}
 
-  glm::dvec3 color_value(double u, double v, const glm::dvec3& point) const override {
+  glm::dvec3 color_value(double /*u*/, double /*v*/, const glm::dvec3& /*point*/) const override {
     return albedo_;
   }
 
@@ -49,7 +49,7 @@ class NoiseTexture : public ITexture {
   public:
     NoiseTexture(double scale) : scale(scale) {}
 
-    glm::dvec3 color_value(double u, double v, const glm::dvec3& point) const override {
+    glm::dvec3 color_value(double /*u*/, double /*v*/, const glm::dvec3& point) const override {
       return glm::dvec3(0.5) * (1.0 + glm::sin(scale * point.z + 10.0 * noise.turbulence(point, 7))); // Make sure we don't end up with negative values by shifting the noise output from [-1, 1] to [0, 1]
     }
 

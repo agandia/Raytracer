@@ -17,7 +17,7 @@ class SpherePDF : public PDF {
 public:
   SpherePDF() {}
 
-  double value(const glm::dvec3& direction) const override {
+  double value(const glm::dvec3& /*direction*/) const override {
     return 1 / (4 * pi);
   }
 

@@ -20,7 +20,7 @@ class Sphere : public Hittable {
       bbox = AABB(center - rvec, center + rvec);
     }
     // Dynamic sphere with a moving center
-    Sphere(const glm::dvec3& center_t1, glm::dvec3& center_t2, double radius, std::shared_ptr<Material> mat) : center(center_t1, center_t2 - center_t1), radius(radius), mat(mat) {
+    Sphere(const glm::dvec3& center_t1, const glm::dvec3& center_t2, double radius, std::shared_ptr<Material> mat) : center(center_t1, center_t2 - center_t1), radius(radius), mat(mat) {
       glm::dvec3 rvec = glm::dvec3(radius, radius, radius);
       AABB box1(center.origin() - rvec, center.direction() + rvec); //center.origin() == center.at(0) but without doing an unnecessary multiplication and addition
       AABB box2(center.at(1) - rvec, center.origin() + rvec);

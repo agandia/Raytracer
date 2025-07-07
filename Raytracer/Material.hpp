@@ -21,10 +21,10 @@ class Material {
 public:
     virtual ~Material() = default;
     // Returns the attenuation and scattered ray if the ray is scattered, otherwise returns false
-    virtual bool scatter(const Ray& in, const HitRecord& hit_rec, ScatterRecord& scatter_rec) const { return false; }
-    virtual glm::vec3 emitted(const Ray& r_in, const HitRecord& rec, double u, double v, const glm::dvec3& point) const { return glm::vec3(0.f); }
+    virtual bool scatter(const Ray& /*in*/, const HitRecord& /*hit_rec*/, ScatterRecord& /*scatter_rec*/) const { return false; }
+    virtual glm::vec3 emitted(const Ray& /*r_in*/, const HitRecord& /*rec*/, double /*u*/, double /*v*/, const glm::dvec3& /*point*/) const { return glm::vec3(0.f); }
 
-    virtual double scattering_pdf(const Ray& r_in, const HitRecord& rec, const Ray& scattered) const {
+    virtual double scattering_pdf(const Ray& /*r_in*/, const HitRecord& /*rec*/, const Ray& /*scattered*/) const {
       return 0.0; // Default implementation returns 0, meaning no PDF is defined
     }
     
@@ -35,7 +35,7 @@ public:
   Lambertian(const glm::vec3& albedo) : texture(std::make_shared<SolidColorTexture>(albedo)) {}
   Lambertian(std::shared_ptr<ITexture>texture) : texture(texture) {}
 
-  bool scatter(const Ray& in, const HitRecord& rec, ScatterRecord& scatter_rec) const override {
+  bool scatter(const Ray& /*in*/, const HitRecord& rec, ScatterRecord& scatter_rec) const override {
     OrthoNormalBasis basis(rec.normal);
     glm::dvec3 scatter_direction = basis.transform(random_cosine_direction());
 
@@ -45,7 +45,7 @@ public:
     return true;
   }
 
-  double scattering_pdf(const Ray& r_in, const HitRecord& rec, const Ray& scattered) const override {
+  double scattering_pdf(const Ray& /*r_in*/, const HitRecord& rec, const Ray& scattered) const override {
     double cos_theta = glm::dot(glm::normalize(rec.normal), glm::normalize(scattered.direction()));
     return (cos_theta  < 0) ? 0 : cos_theta / pi; // PDF for Lambertian scattering
   }
@@ -116,7 +116,7 @@ class DiffuseLight : public Material {
   public:
     DiffuseLight(std::shared_ptr<ITexture> texture) : texture(texture) {}
     DiffuseLight(const glm::vec3& color) : texture(std::make_shared<SolidColorTexture>(color)) {}
-    glm::vec3 emitted(const Ray& r_in, const HitRecord& rec, double u, double v, const glm::dvec3& point) const override{
+    glm::vec3 emitted(const Ray& /*r_in*/, const HitRecord& rec, double u, double v, const glm::dvec3& point) const override {
       if (!rec.front_face) return glm::vec3(0.f); // No emission if not front-facing
       return texture->color_value(u, v, point);
     }
@@ -130,15 +130,14 @@ public:
   Isotropic(const glm::vec3& albedo) : tex(std::make_shared<SolidColorTexture>(albedo)) {}
   Isotropic(std::shared_ptr<ITexture> tex) : tex(tex) {}
 
-  bool scatter(const Ray& r_in, const HitRecord& rec, ScatterRecord& scatter_rec)
-    const override {
+  bool scatter(const Ray& /*r_in*/, const HitRecord& rec, ScatterRecord& scatter_rec) const override {
     scatter_rec.attenuation = tex->color_value(rec.u, rec.v, rec.p);
     scatter_rec.pdf_ptr = std::make_shared<SpherePDF>();
     scatter_rec.skip_pdf = false;
     return true;
   }
 
-  double scattering_pdf(const Ray& r_in, const HitRecord& rec, const Ray& scattered) const override {
+  double scattering_pdf(const Ray& /*r_in*/, const HitRecord& /*rec*/, const Ray& /*scattered*/) const override {
     return 1.0 / (4 * pi); // Uniform isotropic scattering PDF
   }
 
@@ -149,7 +148,7 @@ private:
 class SubsurfaceMaterial : public Material {
 public:
   SubsurfaceMaterial(glm::dvec3 sigma_s, glm::dvec3 sigma_a, double g, double eta)
-    : shape(shape), sigma_s(sigma_s), sigma_a(sigma_a), g(g), eta(eta)
+    : sigma_s(sigma_s), sigma_a(sigma_a), g(g), eta(eta)
   {
   }
 
@@ -228,13 +227,13 @@ public:
 
 private:
   // Henyey–Greenstein Phase Function -------------------------------------------
-  glm::dvec3 sample_hg(double g, glm::dvec3& wo) const {
+  glm::dvec3 sample_hg(double hg, glm::dvec3& wo) const {
     double xi = rnd();
     double cos_theta;
-    if (std::abs(g) < 1e-3) cos_theta = 1 - 2 * xi;
+    if (std::abs(hg) < 1e-3) cos_theta = 1 - 2 * xi;
     else {
-      double sq = (1 - g * g) / (1 - g + 2 * g * xi);
-      cos_theta = (1 + g * g - sq * sq) / (2 * g);
+      double sq = (1 - hg * hg) / (1 - hg + 2 * hg * xi);
+      cos_theta = (1 + hg * hg - sq * sq) / (2 * hg);
     }
     double sin_theta = std::sqrt(std::max(0.0, 1 - cos_theta * cos_theta));
     double phi = 2 * pi * rnd();
@@ -250,7 +249,6 @@ private:
       sin_theta * std::sin(phi) * v);
   }
 
-  std::shared_ptr<Hittable> shape;
   glm::dvec3 sigma_s, sigma_a;
   double g, eta;
 };

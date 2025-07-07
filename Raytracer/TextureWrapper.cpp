@@ -11,7 +11,7 @@ glm::dvec3 CheckerTexture::color_value(double u, double v, const glm::dvec3& poi
   return isEven ? even->color_value(u, v, point) : odd->color_value(u, v, point);
 }
 
-glm::dvec3 ImageTexture::color_value(double u, double v, const glm::dvec3& point) const {
+glm::dvec3 ImageTexture::color_value(double u, double v, const glm::dvec3& /*point*/) const {
   // If we have no texture data, return solid cyan as a noticeable error color
   if (image.height() <= 0) return glm::dvec3(0, 1, 1);
   

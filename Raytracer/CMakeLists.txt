@@ -22,4 +22,12 @@ if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET Raytracer PROPERTY CXX_STANDARD 20)
 endif()
 
+# Enable warnings for MSVC, GCC or Clang
+if (MSVC)
+   #target_compile_options(Raytracer PRIVATE /W4 /WX)
+else()
+  #target_compile_options(Raytracer PRIVATE -Wall -Wextra -Wunused -Werror)
+endif()
+
+
 # TODO: Add tests and install targets if needed.

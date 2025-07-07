@@ -49,7 +49,7 @@ public:
     return random_point - origin;
   }
 
-  glm::dvec3 normal_at(const glm::dvec3& p) const {
+  glm::dvec3 normal_at(const glm::dvec3& /*p*/) const {
     return normal; // Flat surface, same normal everywhere
   }
 

@@ -3,7 +3,6 @@
 #include "Ray.hpp"
 #include "Interval.hpp"
 #include "AABB.hpp"
-#include "OrthonormalBasis.hpp"
 #include <memory>
 #include <glm/glm.hpp>
 
@@ -40,15 +39,15 @@ class Hittable {
 
     virtual AABB bounding_box() const = 0; ///< Get the bounding box of the object
 
-    virtual double pdf_value(const glm::dvec3& origin, const glm::dvec3& direction) const {
+    virtual double pdf_value(const glm::dvec3& /*origin*/, const glm::dvec3& /*direction*/) const {
       return 0.0;
     }
 
-    virtual glm::dvec3  random(const glm::dvec3& origin) const {
+    virtual glm::dvec3  random(const glm::dvec3& /*origin*/) const {
       return glm::dvec3(1, 0, 0);
     }
 
-    virtual glm::dvec3 normal_at(const glm::dvec3& p) const {
+    virtual glm::dvec3 normal_at(const glm::dvec3& /*p**/) const {
       return glm::dvec3(0.0); // Default fallback
     }
 };
